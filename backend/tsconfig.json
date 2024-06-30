@@ -12,22 +12,15 @@
     "strict": true,
     "sourceMap": true,
     "inlineSources": true,
-    "sourceRoot": "/",
+    "rootDir": "./src",
     "outDir": "./dist",
     "skipLibCheck": true,
     "noImplicitAny": false,
     "esModuleInterop": true,
     "declaration": true,
-    "resolveJsonModule": true,
-    "baseUrl": ".",
-    "paths": {
-      "@app/*": ["src/*"],
-      "@utils/*": ["src/utils/*"],
-      "@test/*": ["test/*"],
-      "@types": ["src/types"]
-    }
+    "resolveJsonModule": true
   },
-  "include": ["src/**/*"],
+  "include": ["./src/**/*", "src/functions/.ts"],
   "exclude": ["*.test.ts"],
   "compileOnSave": false
 }

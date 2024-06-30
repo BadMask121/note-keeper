@@ -1,9 +1,9 @@
-import { defineConfig } from 'tsup'
+import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ['src/index.ts'],
-  format: 'esm',
+  entry: ["src/cloud-run.ts", "src/functions.ts"],
+  format: "esm",
   splitting: false,
   sourcemap: true,
   clean: true,
-})
+});

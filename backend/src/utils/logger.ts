@@ -20,7 +20,7 @@ import PinoHttp from "pino-http";
  * @param {string} projectId - Google Cloud Platform Project Id
  */
 let project;
-export const initLogCorrelation = (projectId) => {
+export const initLogCorrelation = (projectId): void => {
   project = projectId;
 };
 

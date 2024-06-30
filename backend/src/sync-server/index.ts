@@ -2,13 +2,13 @@ import express from "express";
 import { WebSocketServer } from "ws";
 import { Repo, RepoConfig } from "@automerge/automerge-repo";
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket";
-// import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs";
 import os from "os";
 import { IncomingMessage } from "http";
 import { Duplex } from "stream";
 import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
+import { logger } from "../utils/logger";
 
-export class Server {
+export class SyncServer {
   /** @type WebSocketServer */
   #socket: WebSocketServer;
 
@@ -40,7 +40,31 @@ export class Server {
       peerId: `storage-server-${hostname}`,
       // Since this is a server, we don't share generously — meaning we only sync documents they already
       // know about and can ask for by ID.
-      sharePolicy: async () => false,
+      // TODO: implement authentication against Redis/Firestore
+      sharePolicy: async (peerId, documentId) => {
+        try {
+          if (!documentId) {
+            logger.warn({ peerId }, "SharePolicy: Document ID NOT found");
+            return false;
+          }
+          logger.trace({ peerId, documentId }, "[SHARE_POLICY]: Document found");
+
+          // peer format: `peer-[user#id]:[unique string combination]
+          if (peerId.toString().length < 8) {
+            logger.error({ peerId }, "SharePolicy: Peer ID invalid");
+            return false;
+          }
+
+          const userId = peerId.split(":")?.[0]?.split("-")?.[1];
+          const isAuthorised = true;
+          // const isAuthorised = await verifyDocumentAccess(Number(userId), documentId);
+          logger.info({ peerId, userId, documentId, isAuthorised }, "[SHARE POLICY CALLED]::");
+          return isAuthorised;
+        } catch (err) {
+          logger.error({ err }, "Error in share policy");
+          return false;
+        }
+      },
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-new

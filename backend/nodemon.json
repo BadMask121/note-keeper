@@ -6,5 +6,5 @@
   "ignore": [
     "src/**/*.spec.ts"
   ],
-  "exec": "tsup && npm run start"
+  "exec": "tsup && npm run start:cloud-run"
 }

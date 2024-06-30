@@ -1,6 +1,4 @@
 import { Firestore } from "@google-cloud/firestore";
-import firebaseAdmin from "firebase-admin";
-
 import { logger } from "../utils/logger";
 import path from "path";
 
@@ -15,16 +13,6 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
 
   constructor() {
     this.tableName = "Changes";
-    const firebaseConfig = {
-      apiKey: "AIzaSyBd0yUnGYsmiBxNH_YHPLNHka7mlSs-Ro8",
-      authDomain: "tappz-d2142.firebaseapp.com",
-      projectId: "tappz-d2142",
-      storageBucket: "tappz-d2142.appspot.com",
-      messagingSenderId: "49074897583",
-      appId: "1:49074897583:web:c1f2cfff47d40955424a5a",
-    };
-
-    firebaseAdmin.initializeApp(firebaseConfig);
     this.client = new Firestore();
   }
 
@@ -32,20 +20,18 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
     const key = getKey(keyArray);
     const cacheValue = this.cache[key];
     if (cacheValue) {
-      console.log(cacheValue, "cached value");
       return cacheValue;
     }
 
     try {
-      const result = [];
-      // const result = await query(`SELECT * FROM "${this.tableName}" WHERE key = $1`, [key]);
-      logger.info({ value: result?.length, key }, "[LOAD DOCUMENT]::");
+      const result = (await this.client.collection(this.tableName).doc(key).get()).data();
 
-      const response = result?.[0];
+      logger.info({ key }, "[LOAD DOCUMENT]::");
+
+      const response = result?.value;
       // MUST RETURN UNDEFINED!
-      if (!response) return new Uint8Array([]);
+      if (!response) return undefined;
       return new Uint8Array(response);
-      // return new Uint8Array(response.value);
     } catch (error) {
       logger.error(
         { action: "Load", key },
@@ -64,7 +50,7 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
       await this.client
         .collection(this.tableName)
         .doc(key)
-        .set({ value: Buffer.from(binary) });
+        .set({ value: Buffer.from(binary), id: key });
     } catch (e) {
       logger.error(
         { error: String(e), key },
@@ -99,8 +85,7 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
       })
     );
 
-    console.log(chunks, "loading all");
-    return [];
+    return chunks;
   }
 
   async removeRange(keyPrefix: StorageKey): Promise<void> {
@@ -108,11 +93,21 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
     this.cachedKeys(keyPrefix).forEach((key) => delete this.cache[key]);
     try {
       logger.info({ key, keyPrefix }, "DELETE DOCUMENT RANGE");
-      // const result = await query(
-      //   `DELETE FROM "${this.tableName}" WHERE key LIKE $1 RETURNING key`,
-      //   [`${key}%`]
-      // );
-      console.log({ result: null, key }, "DELETED MANY RANGE");
+
+      const id = keyPrefix[0];
+      const results = this.client
+        .collection(this.tableName)
+        .orderBy("id")
+        .startAt(id)
+        .endAt(`${id}\uf8ff`);
+
+      results.get().then((querySnapshot) => {
+        querySnapshot.docs.forEach((doc) => {
+          doc.ref.delete();
+        });
+      });
+
+      logger.info({ key }, "DELETED MANY RANGE");
     } catch (e) {
       logger.error({ keyPrefix, key }, "[DELETE RANGE kEYS]");
     }
@@ -125,14 +120,27 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
 
   private async loadRangeKeys(keyPrefix: string[]): Promise<string[]> {
     logger.info({ keyPrefix }, "LoadRange Keys");
-    const response = [];
-    // const response = await query(`SELECT key FROM "${this.tableName}" WHERE key LIKE $1`, [
-    //   `${keyPrefix}%`,
-    // ]);
-    logger.info({ keyPrefix, response: response?.length }, "[LOADED RANGE Keys]");
 
-    // return response ? response.map((row) => row.key) : [];
-    return [];
+    const id = keyPrefix[0];
+    const results = this.client
+      .collection(this.tableName)
+      .orderBy("id")
+      .startAt(id)
+      .endAt(`${id}\uf8ff`);
+
+    const keys: string[] = [];
+
+    results.get().then((querySnapshot) => {
+      querySnapshot.docs.forEach(async (doc) => {
+        keys.push(doc.id);
+      });
+    });
+
+    logger.info(
+      { keyPrefix, response: keys, results: (await results.get()).docs.length },
+      "[LOADED RANGE Keys]"
+    );
+    return keys;
   }
 }
 
