@@ -1,0 +1,65 @@
+import express from 'express';
+import { WebSocketServer } from 'ws';
+import { schema } from 'prosemirror-schema-basic';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { Step } from 'prosemirror-transform';
+import { collab, receiveTransaction, sendableSteps, getVersion } from 'prosemirror-collab';
+
+
+export function startSimpleServer() {
+
+  const app = express();
+  const port = 3000;
+
+  // Initialize editor state with a basic document
+  let editorState = EditorState.create({
+    schema,
+    doc: schema.node('doc', null, [schema.node('paragraph', null, [schema.text('Hello, ProseMirror!')])]),
+    plugins: [collab({ version: 0 })],
+  });
+
+  const wss = new WebSocketServer({ noServer: true });
+
+  wss.on('connection', (ws) => {
+    // Send the initial document and version to the client
+    ws.send(JSON.stringify({ type: 'init', doc: editorState.doc.toJSON(), version: getVersion(editorState) }));
+
+    ws.on('message', (message) => {
+      const data = JSON.parse(message.toString());
+      if (data.type === 'transaction') {
+        const { steps, version } = data;
+        console.log('Received transaction:', { steps, version });
+
+        try {
+          const tr = receiveTransaction(editorState, steps.map((j: any) => Step.fromJSON(schema, j)), version);
+          editorState = editorState.apply(tr);
+          console.log('Applied transaction, new version:', getVersion(editorState));
+
+          // Broadcast the transaction to all connected clients
+          wss.clients.forEach((client) => {
+            if (client !== ws && client.readyState === client.OPEN) {
+              client.send(JSON.stringify({
+                type: 'update',
+                steps: tr.steps.map((step) => step.toJSON()),
+                version: getVersion(editorState),
+              }));
+            }
+          });
+        } catch (error) {
+          console.error('Transaction error:', error);
+          ws.send(JSON.stringify({ type: 'error', message: error }));
+        }
+      }
+    });
+  });
+
+  const server = app.listen(port, () => {
+    console.log(`Server running at http://localhost:${port}`);
+  });
+
+  server.on('upgrade', (request, socket, head) => {
+    wss.handleUpgrade(request, socket, head, (ws) => {
+      wss.emit('connection', ws, request);
+    });
+  });
+}

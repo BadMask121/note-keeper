@@ -1,0 +1,73 @@
+import { Redis } from "ioredis";
+import { Server } from "socket.io";
+import { createAdapter } from "@socket.io/redis-adapter";
+import { Firestore } from "@google-cloud/firestore";
+
+import { Schema, Node } from "prosemirror-model";
+import { Step } from "prosemirror-transform";
+
+const pubClient = new Redis();
+const subClient = pubClient.duplicate();
+
+export const io = new Server({
+  adapter: createAdapter(pubClient, subClient)
+});
+
+subClient.on('error', err => {
+  console.error(err.message);
+});
+
+pubClient.on('error', err => {
+  console.error(err.message);
+});
+
+
+const firestore = new Firestore();
+
+io.on('connection', (socket) => {
+  socket.on('join-note', async (noteId) => {
+    socket.join(noteId);
+
+    // Set up real-time listener
+    const noteRef = firestore.collection('Notes').doc(noteId);
+    const unsubscribe = noteRef.onSnapshot((snapshot) => {
+      io.to(noteId).emit('note-updated', snapshot.data());
+    });
+
+    socket.on('disconnect', unsubscribe);
+  });
+
+  socket.on('edit-note', async (data) => {
+    const { noteId, change } = data;
+
+    try {
+      const noteRef = firestore.collection('Notes').doc(noteId);
+      await firestore.runTransaction(async (transaction) => {
+        const noteDoc = await transaction.get(noteRef);
+        const noteData = noteDoc.data();
+
+        const updatedContent = applyChange(noteData.content, change);
+
+        transaction.update(noteRef, {
+          content: updatedContent,
+          version: noteData.version + 1
+        });
+      });
+
+      // Store the change
+      await firestore.collection('Changes').add({
+        noteId,
+        userId: socket.id,
+        ...change,
+        timestamp: Firestore.FieldValue.serverTimestamp()
+      });
+
+      // Publish change event
+      await pubsub.topic('note-changed').publish(Buffer.from(JSON.stringify({ noteId, change })));
+    } finally {
+      await redis.del(`lock:note:${noteId}`);
+    }
+  });
+});
+
+server.listen(port, () => console.log(`Collaboration Service running on port ${port}`));

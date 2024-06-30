@@ -1,0 +1,66 @@
+import { schema } from 'prosemirror-schema-basic';
+import { EditorState, Transaction } from 'prosemirror-state';
+import { EditorView } from 'prosemirror-view';
+import { Step } from 'prosemirror-transform';
+import { collab, sendableSteps, receiveTransaction } from 'prosemirror-collab';
+import { Node } from 'prosemirror-model';
+
+const socket = new WebSocket('ws://localhost:3000');
+
+let editorState: EditorState;
+
+socket.addEventListener('open', () => {
+  console.log('Connected to the server');
+});
+
+socket.addEventListener('message', (event) => {
+  const data = JSON.parse(event.data);
+  console.log('Received message from server:', data);
+
+  if (data.type === 'init') {
+    try {
+      editorState = EditorState.create({
+        schema,
+        doc: Node.fromJSON(schema, data.doc),
+        plugins: [collab({ version: data.version })],
+      });
+
+      new EditorView(document.querySelector('#editor')!, {
+        state: editorState,
+        dispatchTransaction: (tr: Transaction) => {
+          console.log("dispatching transaction", tr);
+          const newState = editorState.apply(tr);
+          editorState = newState;
+
+          // Send the transaction to the server
+          const steps = sendableSteps(editorState);
+          if (steps) {
+            console.log('Sending transaction:', {
+              steps: steps.steps.map((step) => step.toJSON()),
+              version: steps.version,
+            });
+
+            socket.send(JSON.stringify({
+              type: 'transaction',
+              steps: steps.steps.map((step) => step.toJSON()),
+              clientID: steps.clientID,
+              version: steps.version,
+            }));
+          }
+        },
+      });
+    } catch (error) {
+      console.error('Server init error:', error);
+    }
+  } else if (data.type === 'update') {
+    try {
+      console.log('Applying update:', data);
+      const tr = receiveTransaction(editorState, data.steps.map((j: any) => Step.fromJSON(schema, j)), data.version);
+      editorState = editorState.apply(tr);
+    } catch (error) {
+      console.error('Failed to apply transaction:', error);
+    }
+  } else if (data.type === 'error') {
+    console.error('Server error:', data.message);
+  }
+});
