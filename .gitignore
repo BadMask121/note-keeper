@@ -1,0 +1,13 @@
+node_modules
+npm-debug.log
+*.pem
+!mock-cert.pem
+.env
+package-lock.json
+coverage
+lib
+.eslintcache
+.DS_Store
+tsconfig.prod.tsbuildinfo
+tsconfig.tsbuildinfo
+dist
