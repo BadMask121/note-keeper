@@ -1,7 +1,0 @@
-*.md
-!README*.md
-coverage
-jest.config.js
-test
-bin
-
