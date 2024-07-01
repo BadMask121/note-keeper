@@ -35,7 +35,7 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
     } catch (error) {
       logger.error(
         { action: "Load", key },
-        "PostgresStorageAdaptser::Load ==> Error loading document"
+        "FirebaseStorageAdapter::Load ==> Error loading document"
       );
       throw error;
     }
@@ -46,7 +46,7 @@ export class FirebaseStorageAdapter implements StorageAdapterInterface {
     this.cache[key] = binary;
 
     try {
-      logger.info({ action: "Save", key }, "PostgresStorageAdaptser::Save");
+      logger.info({ action: "Save", key }, "FirebaseStorageAdapter::Save");
       await this.client
         .collection(this.tableName)
         .doc(key)

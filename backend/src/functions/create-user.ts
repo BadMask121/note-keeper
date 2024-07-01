@@ -13,7 +13,7 @@ export async function CreateUser(
   const userInfo = req.body as UserDTO;
 
   try {
-    const user = userDao.create(userInfo);
+    const user = await userDao.create(userInfo);
     return result(res, user);
   } catch (error) {
     const err = error as DaoError;

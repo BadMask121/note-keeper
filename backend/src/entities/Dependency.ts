@@ -3,5 +3,6 @@ export enum InjectedDependency {
   UserDao = "userDao",
   NoteDao = "noteDao",
   CollabDao = "collabDao",
+  CollabCacheDao = "CollabCacheDao",
   User = "user",
 }

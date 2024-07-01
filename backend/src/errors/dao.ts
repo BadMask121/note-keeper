@@ -14,7 +14,7 @@ export class DaoError<T = DaoOptions> extends Error {
 
     this.innerError = options;
 
-    logger.debug(this.options, `[DAO_ERROR::${this.options.name}]: ${this.stack}`);
+    logger.debug(this.options, `[DAO_ERROR::${(this.options as DaoOptions)?.name}]: ${this.stack}`);
     Object.setPrototypeOf(this, Error.prototype);
   }
 }

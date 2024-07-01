@@ -7,15 +7,12 @@ export const inviteUserSchema = object({
         required_error: "usernames are required",
       })
     ),
-    collaboration_id: string({
-      required_error: "collaboration_id id required",
-    }),
   }),
-  param: object({
+  params: object({
     id: string({
-      required_error: "id param id required",
+      required_error: "param id is required",
     }),
   }),
 });
 
-export type InviteUserInput = TypeOf<typeof inviteUserSchema>;
+export type InviteUserInput = TypeOf<typeof inviteUserSchema>["body"];

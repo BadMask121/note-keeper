@@ -7,6 +7,13 @@ import { IncomingMessage } from "http";
 import { Duplex } from "stream";
 import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
 import { logger } from "../utils/logger";
+import { ServerAccessControlAdapter } from "../adapters/ServerAccessControlAdapter";
+import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
+import dotenv from "dotenv";
+import { Redis } from "ioredis";
+import { validateSender } from "./validateSender";
+
+dotenv.config();
 
 export class SyncServer {
   /** @type WebSocketServer */
@@ -26,21 +33,38 @@ export class SyncServer {
     this.#socket = new WebSocketServer({ noServer: true });
 
     const PORT = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3030;
-    const storage = new FirebaseStorageAdapter();
-
     const app = express();
+    const redisClient = new Redis(process.env.REDIS_URL as string);
+    const storage = new FirebaseStorageAdapter();
+    const collabCache = new CollaborationCacheDao(redisClient);
+
     app.use(express.static("public"));
+
+    // authenticate message
+    const accessControl = new ServerAccessControlAdapter({
+      // TODO: implement jwt authentication
+      async validateDocumentAccess(message) {
+        const { senderId } = message;
+        if (!message.documentId) return false;
+        if (!senderId) return false;
+        // if (!message.Authorization) return false;
+
+        const canSendMesssage = await validateSender(collabCache, message.documentId, senderId);
+
+        // allow edit if sender is a contributor or the document owner and document changed
+        return canSendMesssage;
+      },
+    });
 
     const config: RepoConfig = {
       // eslint-disable-next-line @typescript-eslint/ban-ts-comment
       // @ts-expect-error
-      network: [new NodeWSServerAdapter(this.#socket)],
+      network: [accessControl.wrap(new NodeWSServerAdapter(this.#socket))],
       storage,
       /** @ts-expect-error @type {(import("@automerge/automerge-repo").PeerId)}  */
       peerId: `storage-server-${hostname}`,
       // Since this is a server, we don't share generously — meaning we only sync documents they already
       // know about and can ask for by ID.
-      // TODO: implement authentication against Redis/Firestore
       sharePolicy: async (peerId, documentId) => {
         try {
           if (!documentId) {
@@ -55,10 +79,9 @@ export class SyncServer {
             return false;
           }
 
-          const userId = peerId.split(":")?.[0]?.split("-")?.[1];
-          const isAuthorised = true;
-          // const isAuthorised = await verifyDocumentAccess(Number(userId), documentId);
-          logger.info({ peerId, userId, documentId, isAuthorised }, "[SHARE POLICY CALLED]::");
+          const isAuthorised = await validateSender(collabCache, documentId, peerId);
+          logger.info({ peerId, documentId, isAuthorised }, "[SHARE POLICY CALLED]::");
+
           return isAuthorised;
         } catch (err) {
           logger.error({ err }, "Error in share policy");

@@ -82,20 +82,64 @@ export class CollaborationDao implements ICollaborationDao {
     }
   }
 
-  async addContributors(id: string, contributors: string[]): Promise<void> {
+  async getAllContributorsByNoteId(noteId: string, ownerId: string): Promise<string[]> {
     try {
-      const prevContributors = await this.getAllContributors(id);
+      const collabRef = await this.db
+        .collection(this.tableName)
+        .where("owner", "==", ownerId)
+        .where("note_id", "==", noteId)
+        .get();
+
+      const collab = collabRef.docs?.[0]?.data() as Collaboration | undefined;
+      return collab?.contributors || [];
+    } catch (error) {
+      throw new DaoError({
+        name: "CollaborationDao",
+        message: "Unable to retrieve contributors",
+        noteId,
+        error,
+      });
+    }
+  }
+
+  async addContributors(
+    noteId: string,
+    ownerId: string,
+    contributors: string[]
+  ): Promise<string[]> {
+    try {
+      const prevContributors = await this.getAllContributorsByNoteId(noteId, ownerId);
       const updatedContributors = [...new Set([...prevContributors, ...contributors])];
 
-      await this.db.collection(this.tableName).doc(id).update({
+      // only add contributors to valid owners and note
+      const docData = this.db
+        .collection(this.tableName)
+        .where("owner", "==", ownerId)
+        .where("note_id", "==", noteId)
+        .get();
+
+      if ((await docData).empty) {
+        return [];
+      }
+
+      const docRef = (await docData).docs[0].ref;
+      const payload = {
         contributors: updatedContributors,
-      });
+      };
+
+      if (this.transaction) {
+        this.transaction.update(docRef, payload);
+      } else {
+        await docRef.update(payload);
+      }
+
+      return updatedContributors;
     } catch (error) {
       throw new DaoError({
         name: "CollaborationDao",
         message: "Unable to add contributors to collaboration",
         contributors,
-        id,
+        noteId,
         error,
       });
     }
