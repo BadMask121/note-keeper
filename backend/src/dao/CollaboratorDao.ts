@@ -84,13 +84,25 @@ export class CollaborationDao implements ICollaborationDao {
 
   async getAllContributorsByNoteId(noteId: string, ownerId: string): Promise<string[]> {
     try {
-      const collabRef = await this.db
+      const collabRef = this.db
         .collection(this.tableName)
         .where("owner", "==", ownerId)
-        .where("note_id", "==", noteId)
-        .get();
+        .where("note_id", "==", noteId);
 
-      const collab = collabRef.docs?.[0]?.data() as Collaboration | undefined;
+      let collabSnap: Promise<
+        FirebaseFirestore.QuerySnapshot<
+          FirebaseFirestore.DocumentData,
+          FirebaseFirestore.DocumentData
+        >
+      >;
+
+      if (this.transaction) {
+        collabSnap = this.transaction.get(collabRef);
+      } else {
+        collabSnap = collabRef.get();
+      }
+
+      const collab = (await collabSnap).docs?.[0]?.data() as Collaboration | undefined;
       return collab?.contributors || [];
     } catch (error) {
       throw new DaoError({

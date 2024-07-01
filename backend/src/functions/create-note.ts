@@ -32,7 +32,6 @@ export async function CreateNote(
       });
 
       await collabDao.create(note.id, user.id);
-
       return note;
     });
 
