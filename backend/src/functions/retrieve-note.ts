@@ -1,9 +1,21 @@
 import { Request, Response } from "express";
+import { INoteDao } from "../dao/INoteDao";
+import { InjectedDependency } from "../entities/Dependency";
+import { HttpResponse, result, serverError } from "../utils/http";
+import { Note } from "../entities/Note";
 
-export const RetrieveNote = (req: Request, res: Response) => {
-  const replyMessage = req.body.message || "Hello World!";
-  const response = { message: replyMessage };
+export async function RetrieveNote(
+  req: Request,
+  res: Response
+): Promise<Response<HttpResponse<Note>>> {
+  const noteDao = req.app.get(InjectedDependency.NoteDao) as INoteDao;
+  const { id } = req.params;
+  const { user } = req;
 
-  res.send(response);
-  return response; // Specify a return value here so we don't need to kick up an express-server for testing.
-};
+  try {
+    const note = await noteDao.get(id, { ownerId: user.id });
+    return result(res, note);
+  } catch (error) {
+    return serverError(res, error as Error);
+  }
+}

@@ -12,19 +12,29 @@ export class NoteDao implements INoteDao {
     private readonly tableName: string
   ) {}
 
-  async get(id: string): Promise<Note | null> {
+  async get(id: string, filter?: { ownerId: string }): Promise<Note | null> {
     try {
       const docRef = this.db.collection(this.tableName).doc(id);
-      let note: Note | null;
+      let noteSnap: FirebaseFirestore.DocumentSnapshot<
+        FirebaseFirestore.DocumentData,
+        FirebaseFirestore.DocumentData
+      >;
 
       if (this.transaction) {
-        note = (await this.transaction.get(docRef)).data() as Note | null;
+        noteSnap = await this.transaction.get(docRef);
       } else {
-        note = (await docRef.get()).data() as Note | null;
+        noteSnap = await docRef.get();
       }
 
+      const note = noteSnap.data() as Note | null;
       if (!note) {
         return null;
+      }
+
+      if (filter?.ownerId) {
+        if (note.owner !== filter.ownerId) {
+          return null;
+        }
       }
 
       const createdAt = serverTimestampToDate(note.created_at as Timestamp);
@@ -36,8 +46,55 @@ export class NoteDao implements INoteDao {
     } catch (error) {
       throw new DaoError({
         name: "NoteDao",
-        message: "Note not found",
+        message: "Unable to retrieve note",
         id,
+        filter,
+        error,
+      });
+    }
+  }
+
+  // TODO: apply pagination
+  async getAllByOwner(ownerId: string): Promise<Note[]> {
+    try {
+      const docRef = this.db
+        .collection(this.tableName)
+        .where("owner", "==", ownerId)
+        .orderBy("created_at", "desc");
+
+      let noteSnap: FirebaseFirestore.QuerySnapshot<
+        FirebaseFirestore.DocumentData,
+        FirebaseFirestore.DocumentData
+      >;
+
+      if (this.transaction) {
+        noteSnap = await this.transaction.get(docRef);
+      } else {
+        noteSnap = await docRef.get();
+      }
+
+      const notes = noteSnap.docs;
+      if (!notes.length) {
+        return [];
+      }
+
+      const allNotes = notes.map((doc) => {
+        const note = doc.data() as Note;
+        const createdAt = serverTimestampToDate(note.created_at as Timestamp);
+        return {
+          ...note,
+          id: doc.id,
+          created_at: createdAt,
+        };
+      });
+
+      return allNotes;
+    } catch (error) {
+      throw new DaoError({
+        name: "NoteDao",
+        message: "Unable to retrieve notes",
+        ownerId,
+        error,
       });
     }
   }

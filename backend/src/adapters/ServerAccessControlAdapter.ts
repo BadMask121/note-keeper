@@ -6,12 +6,12 @@ import {
 } from "@automerge/automerge-repo";
 import * as A from "@automerge/automerge";
 
-type ServerAccessControlAdapterOptions = {
+interface ServerAccessControlAdapterOptions {
   validateDocumentAccess(
     message: Message & { Authorization?: string },
     hasChanges: boolean
   ): Promise<boolean>;
-};
+}
 
 export class ServerAccessControlAdapter {
   #options: ServerAccessControlAdapterOptions;

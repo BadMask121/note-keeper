@@ -40,19 +40,23 @@ export class SyncServer {
 
     app.use(express.static("public"));
 
-    // authenticate message
+    // intercept network for authentication
     const accessControl = new ServerAccessControlAdapter({
       // TODO: implement jwt authentication
-      async validateDocumentAccess(message) {
+      validateDocumentAccess: async (message) => {
         const { senderId } = message;
         if (!message.documentId) return false;
         if (!senderId) return false;
         // if (!message.Authorization) return false;
 
-        const canSendMesssage = await validateSender(collabCache, message.documentId, senderId);
+        const canAndReceieveSendMesssage = await validateSender(
+          collabCache,
+          message.documentId,
+          senderId
+        );
 
         // allow edit if sender is a contributor or the document owner and document changed
-        return canSendMesssage;
+        return canAndReceieveSendMesssage;
       },
     });
 
@@ -73,7 +77,7 @@ export class SyncServer {
           }
           logger.trace({ peerId, documentId }, "[SHARE_POLICY]: Document found");
 
-          // peer format: `peer-[user#id]:[unique string combination]
+          // peerId must be userId
           if (peerId.toString().length < 8) {
             logger.error({ peerId }, "SharePolicy: Peer ID invalid");
             return false;
@@ -94,11 +98,11 @@ export class SyncServer {
     new Repo(config);
 
     app.get("/", (req, res) => {
-      res.send(`👍 @automerge/example-sync-server is running`);
+      res.send(`Sync Server is running 👍`);
     });
 
     this.#server = app.listen(PORT, () => {
-      console.log(`Listening on port ${PORT}`);
+      logger.debug(`Listening on port ${PORT}`);
       this.#isReady = true;
       this.#readyResolvers.forEach((resolve) => resolve(true));
     });
@@ -107,6 +111,20 @@ export class SyncServer {
       this.#socket.handleUpgrade(request, socket, head, (socket) => {
         this.#socket.emit("connection", socket, request);
       });
+    });
+
+    this.#server.on("close", () => {
+      redisClient.quit();
+    });
+
+    /**
+     * Listen for termination signal for graceful shutdown
+     */
+    process.on("SIGTERM", () => {
+      // Clean up resources on shutdown
+      logger.info("Caught SIGTERM.");
+      logger.flush();
+      redisClient.quit();
     });
   }
 

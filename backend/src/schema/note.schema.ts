@@ -1,7 +1,7 @@
 import { string, object, TypeOf } from "zod";
 
 export const retrieveNoteSchema = object({
-  param: object({
+  params: object({
     id: string({
       required_error: "id is required",
     }),
@@ -9,7 +9,7 @@ export const retrieveNoteSchema = object({
 });
 
 export const deleteNoteSchema = object({
-  param: object({
+  params: object({
     id: string({
       required_error: "id is required",
     }),

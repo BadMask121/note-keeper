@@ -37,7 +37,6 @@ export async function InviteUserToNote(
         .filter((contributorId) => contributorId && contributorId !== user.id) as string[];
 
       // add contributors as collaborators
-
       // add potential contributors in db
       const contributors = await collabDao.addContributors(noteId, user.id, potentialContributors);
 

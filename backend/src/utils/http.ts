@@ -40,7 +40,7 @@ export function unauthorized(res: Response): Response<HttpResponse> {
 }
 
 export function serverError(res: Response, error?: Error): Response<HttpResponse> {
-  log.debug({ error: String(error) });
+  log.fatal({ error });
   return res
     .status(StatusCodes.INTERNAL_SERVER_ERROR)
     .json({

@@ -14,14 +14,18 @@ import { NoteDao } from "./dao/NoteDao";
 import { CollaborationDao } from "./dao/CollaboratorDao";
 import { InjectedDependency } from "./entities/Dependency";
 import validate from "./middleware/validate";
-import { createUser as createUserSchema } from "./schema/user.schema";
-import { createNoteSchema } from "./schema/note.schema";
+import { createUserSchema, getUserSchema } from "./schema/user.schema";
+import { createNoteSchema, retrieveNoteSchema } from "./schema/note.schema";
 import { notFoundError } from "./utils/http";
-import { inviteUserSchema } from "./schema/collaborator.schema";
+import { inviteUserSchema, retrieveInvitedContributorsSchema } from "./schema/collaborator.schema";
 import { InviteUserToNote } from "./functions/invite-user-to-note";
 import { CollaborationCacheDao } from "./dao/CollaborationCacheDao";
 import { Redis } from "ioredis";
 import dotenv from "dotenv";
+import { GetUser } from "./functions/get-user";
+import { RetrieveNote } from "./functions/retrieve-note";
+import { RetrieveNotes } from "./functions/retrieve-notes";
+import { RetrieveContributors } from "./functions/retrieve-contributors";
 
 dotenv.config();
 
@@ -44,12 +48,17 @@ app.set(InjectedDependency.NoteDao, noteDao);
 app.set(InjectedDependency.CollabDao, collabDao);
 app.set(InjectedDependency.CollabCacheDao, collabCacheDao);
 
+// TODO: implement signup authorization layer
 app.post("/user/new", validate(createUserSchema), CreateUser);
+app.post("/user/:username", validate(getUserSchema), GetUser);
 
-// Add middleware to authenticate user requests
+// middleware to authenticate user requests
 app.use(authMiddleware);
 app.post("/note/new", validate(createNoteSchema), CreateNote);
 app.put("/note/:id/invite", validate(inviteUserSchema), InviteUserToNote);
+app.get("/note/:id/invite", validate(retrieveInvitedContributorsSchema), RetrieveContributors);
+app.get("/note/:id", validate(retrieveNoteSchema), RetrieveNote);
+app.get("/note", RetrieveNotes);
 
 app.use((req, res) => {
   return notFoundError(res, "Route not found");

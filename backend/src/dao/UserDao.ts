@@ -30,7 +30,7 @@ export class UserDao implements IUserDao {
     } catch (error) {
       throw new DaoError({
         name: "UserDao",
-        message: "User not found",
+        message: "Unable to retrieve user information",
         id,
         error,
       });
@@ -69,7 +69,7 @@ export class UserDao implements IUserDao {
     } catch (error) {
       throw new DaoError({
         name: "UserDao",
-        message: "User not found",
+        message: "Unable to retrieve user information",
         error,
       });
     }

@@ -15,4 +15,15 @@ export const inviteUserSchema = object({
   }),
 });
 
+export const retrieveInvitedContributorsSchema = object({
+  params: object({
+    id: string({
+      required_error: "param id is required",
+    }),
+  }),
+});
+
 export type InviteUserInput = TypeOf<typeof inviteUserSchema>["body"];
+export type RetrieveInvitedContributorsInput = TypeOf<
+  typeof retrieveInvitedContributorsSchema
+>["params"];
