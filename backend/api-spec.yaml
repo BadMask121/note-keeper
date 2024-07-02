@@ -1,0 +1,21 @@
+swagger: '2.0'
+info:
+  title: My API Gateway
+  description: API Gateway for Cloud Function
+  version: 1.0.0
+schemes:
+  - https
+produces:
+  - application/json
+paths:
+  /hello:
+    get:
+      summary: Hello World
+      operationId: hello
+      x-google-backend:
+        address: ${FUNCTION_URL}
+      responses:
+        '200':
+          description: A successful response
+          schema:
+            type: string

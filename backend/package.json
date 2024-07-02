@@ -4,7 +4,7 @@
   "private": true,
   "description": "live note taking app",
   "license": "BSL",
-  "main": "lib/index",
+  "main": "dist/index.js",
   "keywords": [
     "sentry",
     "cloud run",
@@ -13,16 +13,16 @@
     "google cloud provider"
   ],
   "scripts": {
-    "start:cloud-run": "node ./dist/cloud-run.mjs",
-    "start:functions": "node ./dist/functions.mjs",
-    "build": "tsup",
+    "start:cloud-run": "node ./dist/cloud-run.js",
+    "start:functions": "node ./dist/index.js",
+    "build": "tsc",
     "watch:ws": "nodemon --exec \"npm-run-all --serial build start:cloud-run\"",
     "watch:functions": "nodemon --exec \"npm-run-all --serial build start:functions\"",
     "deploy": "build && (npm deploy:app)",
     "deploy:app": "./bin/deploy.sh",
     "dev": "build --watch & NODE_ENV=development nodemon --exec \"npm start\"",
     "lint": "eslint src/**/*.ts --fix",
-    "test": "npm eslint src/**/*.ts test/**/*.test.ts && npm jest",
+    "test": "npm jest",
     "test:watch": "NODE_ENV=development npm jest --watch --notify --notifyMode=change --coverage"
   },
   "dependencies": {

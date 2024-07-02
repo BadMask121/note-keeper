@@ -1,31 +1,31 @@
 // eslint-disable-next-line import/no-unresolved
-import { onRequest } from "firebase-functions/v2/https";
+import { https } from "firebase-functions/v2";
 import express from "express";
-import { CreateNote } from "./functions/create-note";
-import { CreateUser } from "./functions/create-user";
-import { authMiddleware } from "./middleware/auth";
+import { CreateNote } from "./create-note";
+import { CreateUser } from "./create-user";
+import { authMiddleware } from "../middleware/auth";
 import { Firestore } from "@google-cloud/firestore";
 import bodyParser from "body-parser";
-import { UserDao } from "./dao/UserDao";
-import { DaoTable } from "./dao/IDao";
+import { UserDao } from "../dao/UserDao";
+import { DaoTable } from "../dao/IDao";
 import { createServer } from "http";
-import { logger } from "./utils/logger";
-import { NoteDao } from "./dao/NoteDao";
-import { CollaborationDao } from "./dao/CollaboratorDao";
-import { InjectedDependency } from "./entities/Dependency";
-import validate from "./middleware/validate";
-import { createUserSchema, getUserSchema } from "./schema/user.schema";
-import { createNoteSchema, retrieveNoteSchema } from "./schema/note.schema";
-import { notFoundError } from "./utils/http";
-import { inviteUserSchema, retrieveInvitedContributorsSchema } from "./schema/collaborator.schema";
-import { InviteUserToNote } from "./functions/invite-user-to-note";
-import { CollaborationCacheDao } from "./dao/CollaborationCacheDao";
+import { logger } from "../utils/logger";
+import { NoteDao } from "../dao/NoteDao";
+import { CollaborationDao } from "../dao/CollaboratorDao";
+import { InjectedDependency } from "../entities/Dependency";
+import validate from "../middleware/validate";
+import { createUserSchema, getUserSchema } from "../schema/user.schema";
+import { createNoteSchema, retrieveNoteSchema } from "../schema/note.schema";
+import { notFoundError } from "../utils/http";
+import { inviteUserSchema, retrieveInvitedContributorsSchema } from "../schema/collaborator.schema";
+import { InviteUserToNote } from "./invite-user-to-note";
+import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
 import { Redis } from "ioredis";
 import dotenv from "dotenv";
-import { GetUser } from "./functions/get-user";
-import { RetrieveNote } from "./functions/retrieve-note";
-import { RetrieveNotes } from "./functions/retrieve-notes";
-import { RetrieveContributors } from "./functions/retrieve-contributors";
+import { GetUser } from "./get-user";
+import { RetrieveNote } from "./retrieve-note";
+import { RetrieveNotes } from "./retrieve-notes";
+import { RetrieveContributors } from "./retrieve-contributors";
 
 dotenv.config();
 
@@ -75,4 +75,4 @@ process.on("SIGTERM", async () => {
   await redisClient.quit();
 });
 // Expose Express API as a single Cloud Function:
-export const noteApp = onRequest(app);
+export const noteApp = https.onRequest(app);

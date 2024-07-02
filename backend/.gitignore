@@ -11,3 +11,6 @@ lib
 tsconfig.prod.tsbuildinfo
 tsconfig.tsbuildinfo
 dist
+terraform.tfvars
+.terraform
+terraform.tfstate.backup

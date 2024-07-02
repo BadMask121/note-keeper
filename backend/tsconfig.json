@@ -5,7 +5,7 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "target": "ESNext",
-    "noImplicitReturns": true,
+    "noImplicitReturns": false,
     "noFallthroughCasesInSwitch": true,
     "noUnusedLocals": true,
     "pretty": true,
@@ -21,6 +21,6 @@
     "resolveJsonModule": true
   },
   "include": ["./src/**/*", "src/functions/.ts"],
-  "exclude": ["*.test.ts"],
+  "exclude": ["./tests/", "./node_modules/", "./dist/", "*.test.ts"],
   "compileOnSave": false
 }

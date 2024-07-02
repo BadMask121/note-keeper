@@ -17,3 +17,6 @@ yarn dev
 Now if you visit `localhost:5173` you should see a text editor. If you copy the
 URL and open it in another tab (or another browser), you should see the same
 text editor. Edits from one tab will be reflected in the other.
+
+- TODO: 
+- Implement frontend

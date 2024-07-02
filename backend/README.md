@@ -19,3 +19,4 @@ TODO:
 
 - Orchestrate deployment pipeline and resource allocation declaration using cloud build and scripts.
 - Implement integration test for endpoints
+- Implement AI formatting

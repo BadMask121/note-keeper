@@ -43,6 +43,7 @@ function App({ docUrl }: { docUrl: AutomergeUrl }) {
       // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
       view!.updateState(newState)
     }
+
     if (editorRoot.current != null && loaded) {
       view = new EditorView(editorRoot.current, {
         state: EditorState.create({
