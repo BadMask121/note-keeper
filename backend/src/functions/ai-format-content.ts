@@ -20,7 +20,7 @@ export async function FormatNote(
     // Check cache
     const cachedResult = await redis.get(cacheKey);
     if (cachedResult) {
-      return result(res, { formatted_content: cachedResult });
+      return result(res, { formatted_content: JSON.parse(cachedResult) });
     }
 
     const response = await openai.chat.completions.create({
