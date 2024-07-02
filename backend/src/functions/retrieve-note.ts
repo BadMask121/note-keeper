@@ -24,7 +24,10 @@ export async function RetrieveNote(
 
     // user is owner of note or user is a contributor then return note
     if (note?.owner === user.id || collaborator) {
-      return result(res, note);
+      return result(res, {
+        ...note,
+        isOwner: note?.owner === user.id,
+      });
     }
 
     return result(res, null);
