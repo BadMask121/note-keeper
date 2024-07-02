@@ -19,4 +19,5 @@ TODO:
 
 - Orchestrate deployment pipeline and resource allocation declaration using cloud build and scripts.
 - Implement integration test for endpoints
-- Implement AI formatting
+- Improve documentation and diagram to show redis cache implementation
+- Improve documentation and diagram to show all the endpoints execution flow

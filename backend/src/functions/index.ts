@@ -3,10 +3,12 @@ import bodyParser from "body-parser";
 import cors from "cors";
 import dotenv from "dotenv";
 import express from "express";
+import rateLimit from "express-rate-limit";
 // eslint-disable-next-line import/no-unresolved
 import { https } from "firebase-functions/v2";
 import { createServer } from "http";
 import { Redis } from "ioredis";
+import OpenAI from "openai";
 import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
 import { CollaborationDao } from "../dao/CollaboratorDao";
 import { DaoTable } from "../dao/IDao";
@@ -20,6 +22,7 @@ import { createNoteSchema, formatContentSchema, retrieveNoteSchema } from "../sc
 import { createUserSchema, getUserSchema } from "../schema/user.schema";
 import { notFoundError } from "../utils/http";
 import { logger } from "../utils/logger";
+import { FormatNote } from "./ai-format-content";
 import { CreateNote } from "./create-note";
 import { CreateUser } from "./create-user";
 import { GetUser } from "./get-user";
@@ -27,8 +30,6 @@ import { InviteUserToNote } from "./invite-user-to-note";
 import { RetrieveContributors } from "./retrieve-contributors";
 import { RetrieveNote } from "./retrieve-note";
 import { RetrieveNotes } from "./retrieve-notes";
-import OpenAI from "openai";
-import { FormatNote } from "./ai-format-content";
 
 dotenv.config();
 
@@ -59,12 +60,27 @@ app.set(InjectedDependency.CollabCacheDao, collabCacheDao);
 app.set(InjectedDependency.Redis, redisClient);
 app.set(InjectedDependency.OpenAI, openai);
 
+// Define a rate limiter with options
+const defaultLimit = {
+  windowMs: 15 * 60 * 1000, // 15 minute
+  max: 10, // limit each IP to 100 requests per windowMs
+  message: "Too many requests from this IP, please try again later.",
+};
+
+const apiLimiter = rateLimit(defaultLimit);
+
 // TODO: implement signup authorization layer
-app.post("/user", validate(createUserSchema), CreateUser);
-app.get("/user/:username", validate(getUserSchema), GetUser);
+app.post("/user", rateLimit({ ...defaultLimit, max: 5 }), validate(createUserSchema), CreateUser);
+app.get(
+  "/user/:username",
+  rateLimit({ ...defaultLimit, max: 5 }),
+  validate(getUserSchema),
+  GetUser
+);
 
 // middleware to authenticate user requests
 app.use(authMiddleware);
+app.use(apiLimiter);
 app.post("/note", validate(createNoteSchema), CreateNote);
 app.put("/note/:id/invite", validate(inviteUserSchema), InviteUserToNote);
 app.get("/note/:id/invite", validate(retrieveInvitedContributorsSchema), RetrieveContributors);
@@ -72,7 +88,16 @@ app.get("/note/:id", validate(retrieveNoteSchema), RetrieveNote);
 app.get("/note", RetrieveNotes);
 
 // AI routes
-app.post("/ai/format", validate(formatContentSchema), FormatNote);
+app.post(
+  "/ai/format",
+  rateLimit({
+    ...defaultLimit,
+    windowMs: 3 * 60 * 1000, // 3 minutes,
+    max: 20,
+  }),
+  validate(formatContentSchema),
+  FormatNote
+);
 
 app.use((req, res) => {
   return notFoundError(res, "Route not found");
