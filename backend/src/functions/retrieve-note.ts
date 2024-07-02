@@ -1,9 +1,10 @@
 import { Request, Response } from "express";
 import { INoteDao } from "../dao/INoteDao";
-import { InjectedDependency } from "../entities/Dependency";
+import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { HttpResponse, result, serverError } from "../utils/http";
 import { Note } from "../entities/Note";
 import { ICollaborationDao } from "../dao/ICollaboratorDao";
+import { Redis } from "ioredis";
 
 // return note belonging to owner or contributor
 export async function RetrieveNote(
@@ -12,10 +13,19 @@ export async function RetrieveNote(
 ): Promise<Response<HttpResponse<Note>>> {
   const noteDao = req.app.get(InjectedDependency.NoteDao) as INoteDao;
   const collabDao = req.app.get(InjectedDependency.CollabDao) as ICollaborationDao;
+  const redis = req.app.get(InjectedDependency.Redis) as Redis;
+
   const { id } = req.params;
   const { user } = req;
 
+  const cacheKey = `${CacheKeyPrefix.Note}${id}`;
   try {
+    // Check cache
+    const cachedResult = await redis.get(cacheKey);
+    if (cachedResult) {
+      return result(res, JSON.parse(cachedResult));
+    }
+
     const [collaborator, note] = await Promise.all([
       // check if user is a contributor in note
       collabDao.getCollaborationByNoteId(id, { contributorId: user.id }),
@@ -29,6 +39,9 @@ export async function RetrieveNote(
         isOwner: note?.owner === user.id,
       });
     }
+
+    // cache retrieved note
+    await redis.set(cacheKey, JSON.stringify(note));
 
     return result(res, null);
   } catch (error) {

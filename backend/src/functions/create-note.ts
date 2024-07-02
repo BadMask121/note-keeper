@@ -2,12 +2,13 @@ import { Firestore } from "@google-cloud/firestore";
 import { Request, Response } from "express";
 import { ICollaborationDao } from "../dao/ICollaboratorDao";
 import { INoteDao } from "../dao/INoteDao";
-import { InjectedDependency } from "../entities/Dependency";
+import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { Note } from "../entities/Note";
 import { DaoError } from "../errors/dao";
 import { badRequestError, HttpResponse, result, serverError } from "../utils/http";
 import { CreateNoteInput } from "../schema/note.schema";
 import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
+import Redis from "ioredis";
 
 export async function CreateNote(
   req: Request,
@@ -18,6 +19,7 @@ export async function CreateNote(
   const noteDao = req.app.get(InjectedDependency.NoteDao) as INoteDao;
   const collabDao = req.app.get(InjectedDependency.CollabDao) as ICollaborationDao;
   const collabCacheDao = req.app.get(InjectedDependency.CollabCacheDao) as ICollaborationCacheDao;
+  const redis = req.app.get(InjectedDependency.Redis) as Redis;
 
   const { user } = req;
   const noteInfo = req.body as CreateNoteInput;
@@ -41,8 +43,14 @@ export async function CreateNote(
         collabCacheDao.addContributors(note.id, user.id, []),
       ]);
 
-      return note;
+      return {
+        ...note,
+        isOwner: note.owner === user.id,
+      };
     });
+
+    // cache saved note
+    await redis.set(`${CacheKeyPrefix.Note}${note.id}`, JSON.stringify(note));
 
     return result<Note>(res, note);
   } catch (error) {

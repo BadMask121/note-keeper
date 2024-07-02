@@ -16,7 +16,7 @@ import { InjectedDependency } from "../entities/Dependency";
 import { authMiddleware } from "../middleware/auth";
 import validate from "../middleware/validate";
 import { inviteUserSchema, retrieveInvitedContributorsSchema } from "../schema/collaborator.schema";
-import { createNoteSchema, retrieveNoteSchema } from "../schema/note.schema";
+import { createNoteSchema, formatContentSchema, retrieveNoteSchema } from "../schema/note.schema";
 import { createUserSchema, getUserSchema } from "../schema/user.schema";
 import { notFoundError } from "../utils/http";
 import { logger } from "../utils/logger";
@@ -27,6 +27,8 @@ import { InviteUserToNote } from "./invite-user-to-note";
 import { RetrieveContributors } from "./retrieve-contributors";
 import { RetrieveNote } from "./retrieve-note";
 import { RetrieveNotes } from "./retrieve-notes";
+import OpenAI from "openai";
+import { FormatNote } from "./ai-format-content";
 
 dotenv.config();
 
@@ -40,6 +42,11 @@ const noteDao = new NoteDao(db, DaoTable.Note);
 const collabDao = new CollaborationDao(db, DaoTable.Collaborator);
 const collabCacheDao = new CollaborationCacheDao(redisClient);
 
+// Initialize the OpenAI API with your API key
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
+
 app.use(bodyParser.json());
 app.use(cors());
 
@@ -49,6 +56,8 @@ app.set(InjectedDependency.UserDao, userDao);
 app.set(InjectedDependency.NoteDao, noteDao);
 app.set(InjectedDependency.CollabDao, collabDao);
 app.set(InjectedDependency.CollabCacheDao, collabCacheDao);
+app.set(InjectedDependency.Redis, redisClient);
+app.set(InjectedDependency.OpenAI, openai);
 
 // TODO: implement signup authorization layer
 app.post("/user", validate(createUserSchema), CreateUser);
@@ -61,6 +70,9 @@ app.put("/note/:id/invite", validate(inviteUserSchema), InviteUserToNote);
 app.get("/note/:id/invite", validate(retrieveInvitedContributorsSchema), RetrieveContributors);
 app.get("/note/:id", validate(retrieveNoteSchema), RetrieveNote);
 app.get("/note", RetrieveNotes);
+
+// AI routes
+app.post("/ai/format", validate(formatContentSchema), FormatNote);
 
 app.use((req, res) => {
   return notFoundError(res, "Route not found");

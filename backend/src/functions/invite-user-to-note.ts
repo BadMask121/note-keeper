@@ -2,11 +2,12 @@ import { Firestore } from "@google-cloud/firestore";
 import { Request, Response } from "express";
 import { ICollaborationDao } from "../dao/ICollaboratorDao";
 import { IUserDao } from "../dao/IUserDao";
-import { InjectedDependency } from "../entities/Dependency";
+import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { HttpResponse, result, serverError } from "../utils/http";
 import { InviteUserInput } from "../schema/collaborator.schema";
 import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
 import { User } from "../entities/User";
+import { Redis } from "ioredis";
 
 export async function InviteUserToNote(
   req: Request,
@@ -16,6 +17,7 @@ export async function InviteUserToNote(
   const db = req.app.get(InjectedDependency.Db) as Firestore;
   const collabDao = req.app.get(InjectedDependency.CollabDao) as ICollaborationDao;
   const collabCacheDao = req.app.get(InjectedDependency.CollabCacheDao) as ICollaborationCacheDao;
+  const redis = req.app.get(InjectedDependency.Redis) as Redis;
 
   const { usernames } = req.body as InviteUserInput;
   const { user } = req;
@@ -50,6 +52,9 @@ export async function InviteUserToNote(
       ) as User[];
       return users;
     });
+
+    // cache contributors
+    await redis.set(`${CacheKeyPrefix.Contributors}${noteId}`, JSON.stringify(contributors));
 
     return result(res, contributors);
   } catch (error) {

@@ -23,6 +23,15 @@ export const createNoteSchema = object({
   }),
 });
 
+export const formatContentSchema = object({
+  body: object({
+    content: string({
+      required_error: "content is required",
+    }),
+  }),
+});
+
 export type RetrieveNoteInput = TypeOf<typeof retrieveNoteSchema>;
 export type CreateNoteInput = TypeOf<typeof createNoteSchema>["body"];
 export type DeleteNoteInput = TypeOf<typeof deleteNoteSchema>;
+export type FormatContentInput = TypeOf<typeof formatContentSchema>["body"];
