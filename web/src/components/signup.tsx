@@ -61,6 +61,7 @@ export default function SignupCard(props: SignUpCardProps) {
         const response = await trigger(values);
         setUser(response?.result);
         router.push("/note");
+        return
       } catch (err) {
         let error = (err as any);
         if (error?.response?.data?.message) {

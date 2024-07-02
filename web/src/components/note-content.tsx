@@ -22,18 +22,13 @@ export default function NoteContent() {
   }, [note, selectedId]);
 
   const docUrl = useMemo(() => {
-    console.log(note, "notee")
     if (note?.autoMergeDocId) {
       return `automerge:${note.autoMergeDocId}` as AutomergeUrl;
     }
     return null
   }, [note]);
 
-  const collabs = useMemo(() => {
-    const cols = contributorResponse?.result || []
-    console.log(cols, contributorResponse);
-    return cols
-  }, [contributorResponse])
+  const collabs = useMemo(() => contributorResponse?.result || [], [contributorResponse])
 
   if (!selectedId) {
     return <p>Open a note to view</p>
@@ -43,7 +38,6 @@ export default function NoteContent() {
     return <p>Loading document...</p>
   };
 
-  console.log(docUrl, "url");
   if (!docUrl || !isValidAutomergeUrl(docUrl)) {
     return <p>No document found</p>;
   }

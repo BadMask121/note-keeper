@@ -57,6 +57,7 @@ export default function SigninPage(props: SignInCardProps) {
           setUser(response?.result);
           router.push("/note");
         }
+        return
       } catch (err) {
         let error = (err as any);
         if (error?.response?.data?.message) {
