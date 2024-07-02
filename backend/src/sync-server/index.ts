@@ -1,20 +1,25 @@
-import express from "express";
-import { WebSocketServer } from "ws";
 import { Repo, RepoConfig } from "@automerge/automerge-repo";
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket";
-import os from "os";
+import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs";
+import express from "express";
+import { WebSocketServer } from "ws";
+
 import { IncomingMessage } from "http";
+import os from "os";
 import { Duplex } from "stream";
-import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
-import { logger } from "../utils/logger";
-import { ServerAccessControlAdapter } from "../adapters/ServerAccessControlAdapter";
-import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
+// import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
 import dotenv from "dotenv";
 import { Redis } from "ioredis";
+import { ServerAccessControlAdapter } from "../adapters/ServerAccessControlAdapter";
+import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
+import { logger } from "../utils/logger";
 import { validateSender } from "./validateSender";
 
 dotenv.config();
 
+/**
+ * Sync document changes to connected websocket
+ */
 export class SyncServer {
   /** @type WebSocketServer */
   #socket: WebSocketServer;
@@ -35,7 +40,8 @@ export class SyncServer {
     const PORT = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3030;
     const app = express();
     const redisClient = new Redis(process.env.REDIS_URL as string);
-    const storage = new FirebaseStorageAdapter();
+    // const storage = new FirebaseStorageAdapter();
+    const storage = new NodeFSStorageAdapter();
     const collabCache = new CollaborationCacheDao(redisClient);
 
     app.use(express.static("public"));
@@ -44,17 +50,13 @@ export class SyncServer {
     const accessControl = new ServerAccessControlAdapter({
       // TODO: implement jwt authentication
       validateDocumentAccess: async (message) => {
-        const { senderId } = message;
-        if (!message.documentId) return false;
-        if (!senderId) return false;
-        // if (!message.Authorization) return false;
+        const { senderId, noteId } = message;
+        // we need this to return true to allow for creating new documents
+        if (!message.documentId) return true;
+        if (!message.documentId) return true;
+        if (!senderId || !noteId) return false;
 
-        const canAndReceieveSendMesssage = await validateSender(
-          collabCache,
-          message.documentId,
-          senderId
-        );
-
+        const canAndReceieveSendMesssage = await validateSender(collabCache, noteId, senderId);
         // allow edit if sender is a contributor or the document owner and document changed
         return canAndReceieveSendMesssage;
       },
@@ -69,29 +71,30 @@ export class SyncServer {
       peerId: `storage-server-${hostname}`,
       // Since this is a server, we don't share generously — meaning we only sync documents they already
       // know about and can ask for by ID.
-      sharePolicy: async (peerId, documentId) => {
-        try {
-          if (!documentId) {
-            logger.warn({ peerId }, "SharePolicy: Document ID NOT found");
-            return false;
-          }
-          logger.trace({ peerId, documentId }, "[SHARE_POLICY]: Document found");
+      sharePolicy: async () => false,
+      // sharePolicy: async (peerId, documentId) => {
+      //   try {
+      //     if (!documentId) {
+      //       logger.warn({ peerId }, "SharePolicy: Document ID NOT found");
+      //       return false;
+      //     }
+      //     logger.trace({ peerId, documentId }, "[SHARE_POLICY]: Document found");
 
-          // peerId must be userId
-          if (peerId.toString().length < 8) {
-            logger.error({ peerId }, "SharePolicy: Peer ID invalid");
-            return false;
-          }
+      //     // peerId must be userId
+      //     if (peerId.toString().length < 8) {
+      //       logger.error({ peerId }, "SharePolicy: Peer ID invalid");
+      //       return false;
+      //     }
 
-          const isAuthorised = await validateSender(collabCache, documentId, peerId);
-          logger.info({ peerId, documentId, isAuthorised }, "[SHARE POLICY CALLED]::");
+      //     // const isAuthorised = await validateSender(collabCache, noteId, peerId);
+      //     logger.info({ peerId, documentId }, "[SHARE POLICY CALLED]::");
 
-          return isAuthorised;
-        } catch (err) {
-          logger.error({ err }, "Error in share policy");
-          return false;
-        }
-      },
+      //     return true;
+      //   } catch (err) {
+      //     logger.error({ err }, "Error in share policy");
+      //     return false;
+      //   }
+      // },
     };
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars, no-new

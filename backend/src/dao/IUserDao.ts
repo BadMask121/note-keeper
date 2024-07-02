@@ -1,7 +1,7 @@
 import { User, UserDTO } from "../entities/User";
 
 export interface IUserDao {
-  transaction: FirebaseFirestore.Transaction;
+  transaction?: FirebaseFirestore.Transaction;
 
   get(id: string): Promise<User | null>;
 

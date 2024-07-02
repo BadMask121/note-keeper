@@ -1,8 +1,7 @@
-import { DaoError } from "../errors/dao";
+import { Firestore } from "@google-cloud/firestore";
 import { Collaboration, CollaborationDTO } from "../entities/Collaboration";
+import { DaoError } from "../errors/dao";
 import { ICollaborationDao } from "./ICollaboratorDao";
-import { FieldValue, Firestore, Timestamp } from "@google-cloud/firestore";
-import { serverTimestampToDate } from "../utils/date";
 
 export class CollaborationDao implements ICollaborationDao {
   transaction!: FirebaseFirestore.Transaction;
@@ -22,8 +21,7 @@ export class CollaborationDao implements ICollaborationDao {
         return null;
       }
 
-      const createdAt = serverTimestampToDate(collab.created_at as Timestamp);
-      return { ...collab, created_at: createdAt };
+      return collab;
     } catch (error) {
       throw new DaoError({
         name: "CollaborationDao",
@@ -38,7 +36,7 @@ export class CollaborationDao implements ICollaborationDao {
       const payload: CollaborationDTO = {
         note_id: noteId,
         owner,
-        created_at: FieldValue.serverTimestamp(),
+        created_at: Date.now(),
         contributors: [],
       };
 
@@ -63,6 +61,57 @@ export class CollaborationDao implements ICollaborationDao {
         message: "Unable to create collaboration",
         owner,
         noteId,
+        error,
+      });
+    }
+  }
+
+  /**
+   * Returns an array of collaboration a user belongs to
+   * @param id
+   */
+  async getUserCollaborations(userId: string): Promise<Collaboration[]> {
+    try {
+      const collabRef = this.db
+        .collection(this.tableName)
+        .where("contributors", "array-contains", userId);
+
+      const ownerCollabRef = this.db.collection(this.tableName).where("owner", "==", userId);
+
+      let docSnaps: FirebaseFirestore.QuerySnapshot<
+        FirebaseFirestore.DocumentData,
+        FirebaseFirestore.DocumentData
+      >[];
+
+      if (this.transaction) {
+        docSnaps = await Promise.all([
+          this.transaction.get(collabRef),
+          this.transaction.get(ownerCollabRef),
+        ]);
+      } else {
+        docSnaps = await Promise.all([collabRef.get(), ownerCollabRef.get()]);
+      }
+
+      return docSnaps.flatMap((docSnap) => {
+        return docSnap.docs.map((doc) => {
+          const collab = doc.data() as Collaboration;
+          // if user is owner then return all contributors else
+          // return only userId contributor
+          if (userId !== collab.owner) {
+            const contributors = collab.contributors?.filter((c) => c === userId);
+            return {
+              ...collab,
+              contributors,
+            };
+          }
+          return collab;
+        });
+      });
+    } catch (error) {
+      throw new DaoError({
+        name: "CollaborationDao",
+        message: "Unable to retrieve contributors",
+        userId,
         error,
       });
     }

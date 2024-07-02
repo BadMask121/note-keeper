@@ -1,8 +1,7 @@
+import { Firestore } from "@google-cloud/firestore";
 import { User, UserDTO } from "../entities/User";
 import { DaoError } from "../errors/dao";
-import { FieldValue, Firestore, Timestamp } from "@google-cloud/firestore";
 import { IUserDao } from "./IUserDao";
-import { serverTimestampToDate } from "../utils/date";
 
 export class UserDao implements IUserDao {
   transaction!: FirebaseFirestore.Transaction;
@@ -20,12 +19,9 @@ export class UserDao implements IUserDao {
         return null;
       }
 
-      const createdAt = serverTimestampToDate(user.created_at as Timestamp);
-
       return {
         ...user,
         id,
-        created_at: createdAt,
       };
     } catch (error) {
       throw new DaoError({
@@ -59,12 +55,9 @@ export class UserDao implements IUserDao {
 
       const user = userDoc?.data() as User;
       const userId = userDoc.id;
-      const createdAt = serverTimestampToDate(user.created_at as Timestamp);
-
       return {
         ...user,
         id: userId,
-        created_at: createdAt,
       };
     } catch (error) {
       throw new DaoError({
@@ -89,18 +82,16 @@ export class UserDao implements IUserDao {
         ...userDto,
         name: userDto.name.trim(),
         username: userDto.username.trim(),
-        created_at: FieldValue.serverTimestamp(),
+        created_at: Date.now(),
       };
 
       const userRef = await this.db.collection(this.tableName).add(payload);
       const userId = userRef.id;
       const user = (await userRef.get()).data() as UserDTO;
-      const createdAt = serverTimestampToDate(user.created_at as Timestamp);
 
       return {
         ...user,
         id: userId,
-        created_at: createdAt,
       };
     } catch (error) {
       throw new DaoError({

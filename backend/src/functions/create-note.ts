@@ -6,6 +6,8 @@ import { InjectedDependency } from "../entities/Dependency";
 import { Note } from "../entities/Note";
 import { DaoError } from "../errors/dao";
 import { badRequestError, HttpResponse, result, serverError } from "../utils/http";
+import { CreateNoteInput } from "../schema/note.schema";
+import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
 
 export async function CreateNote(
   req: Request,
@@ -15,8 +17,10 @@ export async function CreateNote(
 
   const noteDao = req.app.get(InjectedDependency.NoteDao) as INoteDao;
   const collabDao = req.app.get(InjectedDependency.CollabDao) as ICollaborationDao;
+  const collabCacheDao = req.app.get(InjectedDependency.CollabCacheDao) as ICollaborationCacheDao;
+
   const { user } = req;
-  const noteInfo = req.body as { title: string };
+  const noteInfo = req.body as CreateNoteInput;
 
   try {
     /**
@@ -29,19 +33,28 @@ export async function CreateNote(
       const note = await noteDao.create(user.id, {
         owner: user.id,
         title: noteInfo.title,
+        autoMergeDocId: noteInfo.autoMergeDocId,
       });
 
-      await collabDao.create(note.id, user.id);
+      await Promise.all([
+        collabDao.create(note.id, user.id),
+        collabCacheDao.addContributors(note.id, user.id, []),
+      ]);
+
       return note;
     });
 
     return result<Note>(res, note);
   } catch (error) {
     const err = error as DaoError;
-    if (err?.innerError!.message!.includes("Note already created")) {
+    if (err?.innerError.message!.includes("Note already created")) {
       return badRequestError(res, "Note already created");
     }
 
     return serverError(res, error as Error);
+  } finally {
+    // MUST TERMINATE TRANSACTION ONCE DONE
+    noteDao.transaction = undefined;
+    collabDao.transaction = undefined;
   }
 }

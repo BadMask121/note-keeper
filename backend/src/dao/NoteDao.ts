@@ -1,8 +1,9 @@
-import { FieldValue, Firestore, Timestamp } from "@google-cloud/firestore";
+import { Firestore } from "@google-cloud/firestore";
+import isNil from "lodash.isnil";
+import omit from "lodash.omitby";
 import { Note, NoteDTO } from "../entities/Note";
-import { INoteDao } from "./INoteDao";
 import { DaoError } from "../errors/dao";
-import { serverTimestampToDate } from "../utils/date";
+import { INoteDao } from "./INoteDao";
 
 export class NoteDao implements INoteDao {
   transaction!: FirebaseFirestore.Transaction;
@@ -37,11 +38,10 @@ export class NoteDao implements INoteDao {
         }
       }
 
-      const createdAt = serverTimestampToDate(note.created_at as Timestamp);
       return {
         ...note,
         id,
-        created_at: createdAt,
+        title: note.title ?? "",
       };
     } catch (error) {
       throw new DaoError({
@@ -80,11 +80,10 @@ export class NoteDao implements INoteDao {
 
       const allNotes = notes.map((doc) => {
         const note = doc.data() as Note;
-        const createdAt = serverTimestampToDate(note.created_at as Timestamp);
         return {
           ...note,
           id: doc.id,
-          created_at: createdAt,
+          title: note.title ?? "",
         };
       });
 
@@ -101,7 +100,7 @@ export class NoteDao implements INoteDao {
 
   async create(owner: string, noteDto: NoteDTO): Promise<Note> {
     // check if note already exists
-    if (await this.isExist(owner, noteDto.title)) {
+    if (noteDto.title && (await this.isExist(owner, noteDto.title))) {
       throw new DaoError({
         name: "NoteDao",
         message: "Note already created",
@@ -111,27 +110,35 @@ export class NoteDao implements INoteDao {
     }
 
     try {
-      const payload: NoteDTO = {
-        ...noteDto,
-        title: noteDto.title.trim(),
-        owner,
-        created_at: FieldValue.serverTimestamp(),
-      };
+      const payload = omit<NoteDTO>(
+        {
+          ...noteDto,
+          title: noteDto?.title?.trim(),
+          owner,
+          created_at: Date.now(),
+        },
+        isNil
+      );
 
-      let noteId: string | null = null;
+      let noteRef: FirebaseFirestore.DocumentReference<
+        FirebaseFirestore.DocumentData,
+        FirebaseFirestore.DocumentData
+      >;
 
       if (this.transaction) {
-        const noteRef = this.db.collection(this.tableName).doc();
+        noteRef = this.db.collection(this.tableName).doc();
         this.transaction.set(noteRef, payload);
-        noteId = noteRef.id;
       } else {
-        const noteRef = await this.db.collection(this.tableName).add(payload);
-        noteId = noteRef.id;
+        noteRef = await this.db.collection(this.tableName).add(payload);
       }
 
+      const noteId = noteRef.id;
       return {
-        ...payload,
         id: noteId,
+        autoMergeDocId: payload?.autoMergeDocId,
+        owner: payload.owner as string,
+        title: payload.title ?? "",
+        created_at: payload.created_at,
       };
     } catch (error) {
       throw new DaoError({

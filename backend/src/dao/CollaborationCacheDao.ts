@@ -26,10 +26,15 @@ export class CollaborationCacheDao implements ICollaborationCacheDao {
 
   async addContributors(docId: string, ownerId: string, contributors: string[]): Promise<string[]> {
     try {
-      await Promise.all([
+      const requests: Promise<unknown>[] = [
         this.client.set(this.buildOwnerKey({ docId }), ownerId),
-        this.client.sadd(this.buildContributorsKey({ docId }), ...contributors),
-      ]);
+      ];
+
+      if (contributors.length) {
+        requests.push(this.client.sadd(this.buildContributorsKey({ docId }), ...contributors));
+      }
+
+      await Promise.all(requests);
 
       return contributors;
     } catch (error) {
@@ -80,10 +85,10 @@ export class CollaborationCacheDao implements ICollaborationCacheDao {
   }
 
   private buildContributorsKey({ docId }: { docId: string }): string {
-    return `${docId}:contributors`;
+    return `note:${docId}:contributors`;
   }
 
   private buildOwnerKey({ docId }: { docId: string }): string {
-    return `${docId}:owner`;
+    return `note:${docId}:owner`;
   }
 }

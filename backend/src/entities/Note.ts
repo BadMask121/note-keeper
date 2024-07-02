@@ -1,12 +1,23 @@
 export interface Note {
   id: string;
-  title: string;
   owner: string;
-  created_at?: unknown;
+  /**
+   * we need to this to be about to find out document in to merge,
+   * this should not be required as it is only needed when using automerge on client and ws
+   */
+  autoMergeDocId?: string;
+  title?: string;
+  isOwner?: boolean;
+  created_at?: number;
 }
 
 export interface NoteDTO {
-  title: string;
   owner: string;
-  created_at?: unknown;
+  /**
+   * we need to this to be about to find out document in to merge,
+   * this should not be required as it is only needed when using automerge on client and ws
+   */
+  autoMergeDocId?: string;
+  title?: string;
+  created_at?: number;
 }

@@ -18,12 +18,11 @@ export const deleteNoteSchema = object({
 
 export const createNoteSchema = object({
   body: object({
-    title: string({
-      required_error: "note title is required",
-    }),
+    title: string().optional(),
+    autoMergeDocId: string().optional(),
   }),
 });
 
 export type RetrieveNoteInput = TypeOf<typeof retrieveNoteSchema>;
-export type CreateNoteInput = TypeOf<typeof createNoteSchema>;
+export type CreateNoteInput = TypeOf<typeof createNoteSchema>["body"];
 export type DeleteNoteInput = TypeOf<typeof deleteNoteSchema>;

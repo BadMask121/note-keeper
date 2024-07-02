@@ -49,5 +49,8 @@ export async function InviteUserToNote(
     return result(res, { contributors });
   } catch (error) {
     return serverError(res, error as Error);
+  } finally {
+    userDao.transaction = undefined;
+    collabDao.transaction = undefined;
   }
 }
