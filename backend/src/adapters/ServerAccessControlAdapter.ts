@@ -8,7 +8,7 @@ import * as A from "@automerge/automerge";
 
 interface ServerAccessControlAdapterOptions {
   validateDocumentAccess(
-    message: Message & { Authorization?: string; noteId?: string },
+    message: Message & { userId?: string; noteId?: string },
     hasChanges: boolean
   ): Promise<boolean>;
 }

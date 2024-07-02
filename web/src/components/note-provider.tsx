@@ -11,15 +11,14 @@ const userId = user?.id;
 
 let repo: Repo | null;
 if (userId) {
-  const peerId = userId as PeerId
-
-
   const accessDataProvider = new ClientAccessControlAdapter({
+    // TODO: pass in Jwt authentation token
     async addAuthData(message, hasChanges) {
       if (message.documentId) {
         const note = getSelectedNote();
         return {
           ...message,
+          userId,
           noteId: note.id,
         };
       }
@@ -35,7 +34,6 @@ if (userId) {
   repo = new Repo({
     network: networkAdapters,
     storage: new IndexedDBStorageAdapter("automerge"),
-    peerId
   });
 
   // @ts-expect-error -- we put the handle and the repo on window so you can experiment with them from the dev tools

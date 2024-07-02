@@ -74,3 +74,10 @@
       @apply bg-background text-foreground;
     }
   }
+
+  .ProseMirror {
+    padding: 10px;
+    height: 100vh;
+    overflow-y: auto;
+    outline: none;
+  }

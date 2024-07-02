@@ -6,11 +6,12 @@ import { InjectedDependency } from "../entities/Dependency";
 import { HttpResponse, result, serverError } from "../utils/http";
 import { InviteUserInput } from "../schema/collaborator.schema";
 import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
+import { User } from "../entities/User";
 
 export async function InviteUserToNote(
   req: Request,
   res: Response
-): Promise<Response<HttpResponse<{ contributors: string[] }>>> {
+): Promise<Response<HttpResponse<User[]>>> {
   const userDao = req.app.get(InjectedDependency.UserDao) as IUserDao;
   const db = req.app.get(InjectedDependency.Db) as Firestore;
   const collabDao = req.app.get(InjectedDependency.CollabDao) as ICollaborationDao;
@@ -43,10 +44,14 @@ export async function InviteUserToNote(
       // add contributors in cache
       await collabCacheDao.addContributors(noteId, user.id, contributors);
 
-      return contributors;
+      // get contributors user info
+      const users = (await Promise.all(contributors.map((col) => userDao.get(col)))).filter(
+        Boolean
+      ) as User[];
+      return users;
     });
 
-    return result(res, { contributors });
+    return result(res, contributors);
   } catch (error) {
     return serverError(res, error as Error);
   } finally {

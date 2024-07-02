@@ -15,3 +15,19 @@ export function getSlug() {
   // Remove empty segments (in case the URL ends with '/')
   return pathSegments.filter(segment => segment !== '').pop();
 }
+
+
+export function getInitials(fullName: string) {
+  if (!fullName) {
+    return null;
+  }
+
+  const allNames = fullName.trim().split(" ");
+  const initials = allNames.reduce((acc, curr, index) => {
+    if (index === 0 || index === allNames.length - 1) {
+      acc = `${acc}${curr.charAt(0).toUpperCase()}`;
+    }
+    return acc;
+  }, "");
+  return initials;
+}

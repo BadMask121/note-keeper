@@ -1,13 +1,13 @@
 import { Repo, RepoConfig } from "@automerge/automerge-repo";
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket";
-import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs";
+// import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs";
 import express from "express";
 import { WebSocketServer } from "ws";
 
 import { IncomingMessage } from "http";
 import os from "os";
 import { Duplex } from "stream";
-// import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
+import { FirebaseStorageAdapter } from "../adapters/FirebaseStorageAdapter";
 import dotenv from "dotenv";
 import { Redis } from "ioredis";
 import { ServerAccessControlAdapter } from "../adapters/ServerAccessControlAdapter";
@@ -40,8 +40,8 @@ export class SyncServer {
     const PORT = process.env.PORT !== undefined ? parseInt(process.env.PORT, 10) : 3030;
     const app = express();
     const redisClient = new Redis(process.env.REDIS_URL as string);
-    // const storage = new FirebaseStorageAdapter();
-    const storage = new NodeFSStorageAdapter();
+    const storage = new FirebaseStorageAdapter();
+    // const storage = new NodeFSStorageAdapter();
     const collabCache = new CollaborationCacheDao(redisClient);
 
     app.use(express.static("public"));
@@ -50,14 +50,13 @@ export class SyncServer {
     const accessControl = new ServerAccessControlAdapter({
       // TODO: implement jwt authentication
       validateDocumentAccess: async (message) => {
-        const { senderId, noteId } = message;
+        const { senderId, noteId, userId } = message;
         // we need this to return true to allow for creating new documents
         if (!message.documentId) return true;
-        if (!message.documentId) return true;
-        if (!senderId || !noteId) return false;
+        if (!senderId || !noteId || !userId) return false;
 
-        const canAndReceieveSendMesssage = await validateSender(collabCache, noteId, senderId);
         // allow edit if sender is a contributor or the document owner and document changed
+        const canAndReceieveSendMesssage = await validateSender(collabCache, noteId, userId);
         return canAndReceieveSendMesssage;
       },
     });

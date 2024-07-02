@@ -1,7 +1,7 @@
 import { AutomergeUrl, DocHandleChangePayload } from "@automerge/automerge-repo"
 import { useHandle } from "@automerge/automerge-repo-react-hooks"
 import { useEffect, useRef, useState } from "react"
-import { EditorState, Transaction } from "prosemirror-state"
+import { EditorState, Transaction, Selection } from "prosemirror-state"
 import { EditorView } from "prosemirror-view"
 import { exampleSetup } from "prosemirror-example-setup"
 import { AutoMirror } from "@automerge/prosemirror"
@@ -41,6 +41,17 @@ export function NoteEditor({ docUrl }: { docUrl: AutomergeUrl }) {
     }
 
     if (editorRoot.current != null && loaded) {
+
+      function placeCursorAtEnd(view: EditorView) {
+        const editorState = view.state;
+        const transaction = editorState.tr.setSelection(
+          Selection.near(editorState.doc.resolve(editorState.doc.content.size))
+        );
+
+        view.dispatch(transaction);
+        view.focus(); // Optionally focus the editor after setting the cursor
+      }
+
       view = new EditorView(editorRoot.current, {
         state: EditorState.create({
           schema: mirror.schema, // It's important that we use the schema from the mirror
@@ -52,8 +63,10 @@ export function NoteEditor({ docUrl }: { docUrl: AutomergeUrl }) {
           view!.updateState(newState)
         },
       })
+      placeCursorAtEnd(view);
       handle!.on("change", onPatch)
     }
+
     return () => {
       if (handle != null) {
         handle.off("change", onPatch)

@@ -131,12 +131,36 @@ export class CollaborationDao implements ICollaborationDao {
     }
   }
 
-  async getAllContributorsByNoteId(noteId: string, ownerId: string): Promise<string[]> {
+  async getAllContributorsByNoteId(
+    noteId: string,
+    filter?: { ownerId?: string; contributorId?: string }
+  ): Promise<string[]> {
     try {
-      const collabRef = this.db
-        .collection(this.tableName)
-        .where("owner", "==", ownerId)
-        .where("note_id", "==", noteId);
+      const collab = await this.getCollaborationByNoteId(noteId, filter);
+      return collab?.contributors || [];
+    } catch (error) {
+      throw new DaoError({
+        name: "CollaborationDao",
+        message: "Unable to retrieve contributors",
+        noteId,
+        error,
+      });
+    }
+  }
+
+  async getCollaborationByNoteId(
+    noteId: string,
+    filter?: { ownerId?: string; contributorId?: string }
+  ): Promise<Collaboration | null> {
+    try {
+      let collabRef = this.db.collection(this.tableName).where("note_id", "==", noteId);
+
+      if (filter?.ownerId) {
+        collabRef = collabRef.where("owner", "==", filter.ownerId);
+      }
+      if (filter?.contributorId) {
+        collabRef = collabRef.where("contributors", "array-contains", filter.contributorId);
+      }
 
       let collabSnap: Promise<
         FirebaseFirestore.QuerySnapshot<
@@ -152,7 +176,7 @@ export class CollaborationDao implements ICollaborationDao {
       }
 
       const collab = (await collabSnap).docs?.[0]?.data() as Collaboration | undefined;
-      return collab?.contributors || [];
+      return collab || null;
     } catch (error) {
       throw new DaoError({
         name: "CollaborationDao",
@@ -169,7 +193,7 @@ export class CollaborationDao implements ICollaborationDao {
     contributors: string[]
   ): Promise<string[]> {
     try {
-      const prevContributors = await this.getAllContributorsByNoteId(noteId, ownerId);
+      const prevContributors = await this.getAllContributorsByNoteId(noteId, { ownerId });
       const updatedContributors = [...new Set([...prevContributors, ...contributors])];
 
       // only add contributors to valid owners and note
