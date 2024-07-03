@@ -29,7 +29,7 @@ export async function FormatNote(
         {
           role: "system",
           content: `
-          Please format the following text using Rich Text Format (RTF) to include headings, lists, code blocks, and emphasize important parts.
+          Please format the following rich text content using html Include headings, lists, emphasized text, and any necessary markup.
           Text to Format:
           \n\n${content}`,
         },
