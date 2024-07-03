@@ -8,7 +8,6 @@ substitutions:
   _REDIS_INSTANCE_ID: tappz-redis
   _REDIS_LOCATION: us-central1
   _REDIS_CONNECTOR: redis-vpc-connector
-  _NETWORK_NAME: default
 
 steps:
   # Build and push Cloud Run service
