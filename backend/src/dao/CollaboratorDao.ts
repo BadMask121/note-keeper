@@ -2,13 +2,14 @@ import { Firestore } from "@google-cloud/firestore";
 import { Collaboration, CollaborationDTO } from "../entities/Collaboration";
 import { DaoError } from "../errors/dao";
 import { ICollaborationDao } from "./ICollaboratorDao";
+import { DaoTable } from "./IDao";
 
 export class CollaborationDao implements ICollaborationDao {
   transaction!: FirebaseFirestore.Transaction;
 
   constructor(
     private readonly db: Firestore,
-    private readonly tableName: string
+    private readonly tableName: DaoTable
   ) {}
 
   async get(id: string): Promise<Collaboration | null> {

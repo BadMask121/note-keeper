@@ -2,13 +2,14 @@ import { Firestore } from "@google-cloud/firestore";
 import { User, UserDTO } from "../entities/User";
 import { DaoError } from "../errors/dao";
 import { IUserDao } from "./IUserDao";
+import { DaoTable } from "./IDao";
 
 export class UserDao implements IUserDao {
   transaction!: FirebaseFirestore.Transaction;
 
   constructor(
     private readonly db: Firestore,
-    private readonly tableName: string
+    private readonly tableName: DaoTable
   ) {}
 
   async get(id: string): Promise<User | null> {

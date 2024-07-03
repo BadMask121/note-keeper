@@ -25,7 +25,15 @@ export async function FormatNote(
 
     const response = await openai.chat.completions.create({
       model: "gpt-3.5-turbo",
-      messages: [{ role: "system", content: `Format the following note:\n\n${content}` }],
+      messages: [
+        {
+          role: "system",
+          content: `
+          Please format the following text using Rich Text Format (RTF) to include headings, lists, code blocks, and emphasize important parts.
+          Text to Format:
+          \n\n${content}`,
+        },
+      ],
     });
 
     const formattedContent = response?.choices[0]?.message?.content?.trim();

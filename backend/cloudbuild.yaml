@@ -10,6 +10,10 @@ substitutions:
   _REDIS_CONNECTOR: redis-vpc-connector
 
 steps:
+  # Deploy firestore indexes
+  - name: 'gcr.io/cloud-builders/firebase'
+    args: ['deploy', '--only', 'firestore:indexes']
+
   # Build and push Cloud Run service
   - name: 'gcr.io/cloud-builders/docker'
     args: ['build', '-t', 'gcr.io/$PROJECT_ID/tappz:latest', '.']

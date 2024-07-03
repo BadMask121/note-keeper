@@ -4,13 +4,14 @@ import omit from "lodash.omitby";
 import { Note, NoteDTO } from "../entities/Note";
 import { DaoError } from "../errors/dao";
 import { INoteDao } from "./INoteDao";
+import { DaoTable } from "./IDao";
 
 export class NoteDao implements INoteDao {
   transaction!: FirebaseFirestore.Transaction;
 
   constructor(
     private readonly db: Firestore,
-    private readonly tableName: string
+    private readonly tableName: DaoTable
   ) {}
 
   async get(id: string, filter?: { ownerId: string }): Promise<Note | null> {
