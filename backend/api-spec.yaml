@@ -1,3 +1,4 @@
+# THIS IS NOT CORRECT (WILL IMPROVE LATER)
 swagger: '2.0'
 info:
   title: My API Gateway
@@ -13,7 +14,7 @@ paths:
       summary: Hello World
       operationId: hello
       x-google-backend:
-        address: ${FUNCTION_URL}
+        address: FUNCTION_URL
       responses:
         '200':
           description: A successful response

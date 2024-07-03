@@ -1,17 +1,16 @@
+# TODO: We can improve this to fully automate the resource creation like Redis
 substitutions:
   _RUNTIME: nodejs18
-  _SERVICE_NAME: hello-world
+  _SERVICE_NAME: tappz
   _REGION: us-central1
   _ENTRY_POINT: noteApp
-  _REDIS_INSTANCE_NAME: tappz-redis
-  _COMMIT_SHA: da39a3ee5e6b4b0d3255bfef95601890afd80709
 
 steps:
   # Build and push Cloud Run service
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['build', '-t', 'gcr.io/$PROJECT_ID/tappz:${_COMMIT_SHA}', '.']
+    args: ['build', '-t', 'gcr.io/$PROJECT_ID/tappz:$COMMIT_SHA', '.']
   - name: 'gcr.io/cloud-builders/docker'
-    args: ['push', 'gcr.io/$PROJECT_ID/tappz:${_COMMIT_SHA}']
+    args: ['push', 'gcr.io/$PROJECT_ID/tappz:$COMMIT_SHA']
 
   # Deploy to Cloud Run
   - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
@@ -20,33 +19,10 @@ steps:
       - 'run'
       - 'deploy'
       - 'tappz'
-      - '--image=gcr.io/$PROJECT_ID/tappz:${_COMMIT_SHA}'
+      - '--image=gcr.io/$PROJECT_ID/tappz:$COMMIT_SHA'
       - '--region=${_REGION}'
       - '--platform=managed'
       - '--allow-unauthenticated'
-
-# Fetch Redis host and port
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'redis'
-      - 'instances'
-      - 'describe'
-      - '${_REDIS_INSTANCE_NAME}'  # Replace with your Redis instance name
-      - '--region=${_REGION}'
-      - '--format=value(host,port)'
-
-  # Export Redis URL as environment variable
-  - name: 'gcr.io/cloud-builders/gcloud'
-    entrypoint: bash
-    args:
-      - '-c'
-      - |
-        REDIS_HOST_PORT=$(gcloud redis instances describe YOUR_REDIS_INSTANCE_NAME --region=$_REGION --format='value(host,port)')
-        REDIS_HOST=$(echo $REDIS_HOST_PORT | cut -d':' -f1)
-        REDIS_PORT=$(echo $REDIS_HOST_PORT | cut -d':' -f2)
-        export REDIS_URL="redis://$REDIS_HOST:$REDIS_PORT"
-        echo "REDIS_URL=$REDIS_URL" >> $BASH_ENV
 
   # Install dependencies and build for Cloud Function
   - name: 'gcr.io/cloud-builders/npm'
@@ -67,43 +43,63 @@ steps:
       - '--allow-unauthenticated'
       - '--region=${_REGION}'
       - '--entry-point=${_ENTRY_POINT}'
-      - '--update-env-vars=REDIS_URL=$REDIS_URL'
       - '--memory=128Mi'
 
-  # Deploy API Gateway
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'api-gateway'
-      - 'api-configs'
-      - 'create'
-      - 'my-api-config'
-      - '--api=my-api'
-      - '--openapi-spec=./api-spec.yaml'
-      - '--project=$PROJECT_ID'
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'api-gateway'
-      - 'gateways'
-      - 'update'
-      - 'my-gateway'
-      - '--api=my-api'
-      - '--api-config=my-api-config'
-      - '--location=us-central1'
-      - '--project=$PROJECT_ID'
+ # Uncomment when ready to use api gateway and load balancers
+  # # Deploy API Gateway
+  # - name: 'bash'
+  #   entrypoint: 'bash'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       sed -i "s|FUNCTION_URL|https://${_REGION}-$PROJECT_ID.cloudfunctions.net/${_SERVICE_NAME}|g" ./api-spec.yaml
 
-  # Update Load Balancer backend
-  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
-    entrypoint: gcloud
-    args:
-      - 'compute'
-      - 'backend-services'
-      - 'update'
-      - 'my-backend-service'
-      - '--global'
-      - '--network-endpoint-group=my-cloud-run-neg'
-      - '--network-endpoint-group-region=us-central1'
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: gcloud
+  #   args:
+  #     - 'api-gateway'
+  #     - 'api-configs'
+  #     - 'create'
+  #     - '${_SERVICE_NAME}-config'
+  #     - '--api=${_SERVICE_NAME}-api'
+  #     - '--openapi-spec=./api-spec.yaml'
+  #     - '--project=$PROJECT_ID'
+
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: 'bash'
+  #   args:
+  #     - '-c'
+  #     - |
+  #       if gcloud api-gateway gateways describe ${_SERVICE_NAME} --location=${_REGION} --project=${PROJECT_ID} > /dev/null 2>&1; then
+  #         echo "Gateway exists. Updating..."
+  #         gcloud api-gateway gateways update ${_SERVICE_NAME} \
+  #           --api=${_SERVICE_NAME}-api \
+  #           --api-config=${_SERVICE_NAME}-config \
+  #           --location=${_REGION} \
+  #           --project=${PROJECT_ID}
+  #       else
+  #         echo "Gateway does not exist. Creating..."
+  #         gcloud api-gateway gateways create ${_SERVICE_NAME} \
+  #           --api=${_SERVICE_NAME}-api \
+  #           --api-config=${_SERVICE_NAME}-config \
+  #           --location=${_REGION} \
+  #           --project=${PROJECT_ID}
+  #       fi
+
+  # # # Update Load Balancer backend
+  # - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+  #   entrypoint: gcloud
+  #   args:
+  #     - 'compute'
+  #     - 'backend-services'
+  #     - 'create'
+  #     - 'my-backend-service'
+  #     - '--global'
+  #     - '--protocol=HTTP2'
+  #     - '--health-checks=my-health-check'
+  #     - '--timeout=3600s'
+  #     - '--port-name=api'
+  #     - '--protocol=HTTP'
 
 images:
-  - 'gcr.io/$PROJECT_ID/tappz:${_COMMIT_SHA}'
+  - 'gcr.io/$PROJECT_ID/tappz:$COMMIT_SHA'

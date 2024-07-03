@@ -30,13 +30,19 @@ import { InviteUserToNote } from "./invite-user-to-note";
 import { RetrieveContributors } from "./retrieve-contributors";
 import { RetrieveNote } from "./retrieve-note";
 import { RetrieveNotes } from "./retrieve-notes";
+import { getSecret } from "../lib/config";
 
 dotenv.config();
+
+const isDev = process.env.NODE_ENV === "development";
 
 const port = 8181;
 const app = express();
 const db = new Firestore();
-const redisClient = new Redis(process.env.REDIS_URL as string);
+const openAIKey = isDev ? process.env.OPENAI_API_KEY : await getSecret("OPENAI_API_KEY");
+const redisUrl = isDev ? process.env.REDIS_URL : await getSecret("REDIS_URL");
+
+const redisClient = new Redis(redisUrl as string);
 
 const userDao = new UserDao(db, DaoTable.User);
 const noteDao = new NoteDao(db, DaoTable.Note);
@@ -45,7 +51,7 @@ const collabCacheDao = new CollaborationCacheDao(redisClient);
 
 // Initialize the OpenAI API with your API key
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: openAIKey,
 });
 
 app.use(bodyParser.json());
@@ -113,5 +119,6 @@ process.on("SIGTERM", async () => {
   logger.flush();
   await redisClient.quit();
 });
+
 // Expose Express API as a single Cloud Function:
 export const noteApp = https.onRequest(app);
