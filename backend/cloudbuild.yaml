@@ -4,6 +4,11 @@ substitutions:
   _SERVICE_NAME: tappz
   _REGION: us-central1
   _ENTRY_POINT: noteApp
+  _SECRET_PROJECT_ID: "49074897583"
+  _REDIS_INSTANCE_ID: tappz-redis
+  _REDIS_LOCATION: us-central1
+  _REDIS_CONNECTOR: redis-vpc-connector
+  _NETWORK_NAME: default
 
 steps:
   # Build and push Cloud Run service
@@ -22,7 +27,9 @@ steps:
       - '--image=gcr.io/$PROJECT_ID/tappz:latest'
       - '--region=${_REGION}'
       - '--platform=managed'
+      - '--set-env-vars=NODE_ENV=production,PROJECT_ID=$PROJECT_ID,SECRET_PROJECT_ID=${_SECRET_PROJECT_ID},REDIS_INSTANCE_ID=${_REDIS_INSTANCE_ID},REDIS_LOCATION=${_REDIS_LOCATION}'
       - '--allow-unauthenticated'
+      - '--vpc-connector=${_REDIS_CONNECTOR}'
 
   # Install dependencies and build for Cloud Function
   - name: 'gcr.io/cloud-builders/npm'
@@ -43,7 +50,9 @@ steps:
       - '--allow-unauthenticated'
       - '--region=${_REGION}'
       - '--entry-point=${_ENTRY_POINT}'
-      - '--memory=128Mi'
+      - '--set-env-vars=NODE_ENV=production,PROJECT_ID=$PROJECT_ID,SECRET_PROJECT_ID=${_SECRET_PROJECT_ID},REDIS_INSTANCE_ID=${_REDIS_INSTANCE_ID},REDIS_LOCATION=${_REDIS_LOCATION}'
+      - '--memory=1Gb'
+      - '--vpc-connector=${_REDIS_CONNECTOR}'
 
  # Uncomment when ready to use api gateway and load balancers
   # # Deploy API Gateway

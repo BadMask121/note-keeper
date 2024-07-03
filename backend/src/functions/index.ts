@@ -30,13 +30,13 @@ import { InviteUserToNote } from "./invite-user-to-note";
 import { RetrieveContributors } from "./retrieve-contributors";
 import { RetrieveNote } from "./retrieve-note";
 import { RetrieveNotes } from "./retrieve-notes";
-import { getSecret } from "../lib/config";
+import { getRedisInstanceUrl, getSecret } from "../lib/config";
 
 dotenv.config();
 
 const isDev = process.env.NODE_ENV === "development";
 const openAIKey = isDev ? process.env.OPENAI_API_KEY : await getSecret("OPENAI_API_KEY");
-const redisUrl = isDev ? process.env.REDIS_URL : await getSecret("REDIS_URL");
+const redisUrl = isDev ? process.env.REDIS_URL : await getRedisInstanceUrl();
 
 const port = 8181;
 const app = express();
