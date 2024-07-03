@@ -14,7 +14,7 @@ RUN yarn install --frozen-lockfile
 COPY . ./
 
 # Build the application.
-RUN yarn build:cloud-run
+RUN yarn build
 
 # Use a separate stage for the final image to keep it small.
 FROM node:18-slim

@@ -35,12 +35,12 @@ import { getSecret } from "../lib/config";
 dotenv.config();
 
 const isDev = process.env.NODE_ENV === "development";
+const openAIKey = isDev ? process.env.OPENAI_API_KEY : await getSecret("OPENAI_API_KEY");
+const redisUrl = isDev ? process.env.REDIS_URL : await getSecret("REDIS_URL");
 
 const port = 8181;
 const app = express();
 const db = new Firestore();
-const openAIKey = isDev ? process.env.OPENAI_API_KEY : await getSecret("OPENAI_API_KEY");
-const redisUrl = isDev ? process.env.REDIS_URL : await getSecret("REDIS_URL");
 
 const redisClient = new Redis(redisUrl as string);
 

@@ -1,6 +1,5 @@
 import { Repo, RepoConfig } from "@automerge/automerge-repo";
 import { NodeWSServerAdapter } from "@automerge/automerge-repo-network-websocket";
-// import { NodeFSStorageAdapter } from "@automerge/automerge-repo-storage-nodefs";
 import express from "express";
 import { WebSocketServer } from "ws";
 
