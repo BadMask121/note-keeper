@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
 import { INoteDao } from "../dao/INoteDao";
 import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
-import { HttpResponse, result, serverError } from "../utils/http";
+import { HttpResponse, result, serverError } from "../lib/http";
 import { Note } from "../entities/Note";
 import { ICollaborationDao } from "../dao/ICollaboratorDao";
 import { Redis } from "ioredis";

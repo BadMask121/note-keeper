@@ -12,7 +12,7 @@ import dotenv from "dotenv";
 import { Redis } from "ioredis";
 import { ServerAccessControlAdapter } from "../adapters/ServerAccessControlAdapter";
 import { CollaborationCacheDao } from "../dao/CollaborationCacheDao";
-import { logger } from "../utils/logger";
+import { logger } from "../lib/logger";
 import { validateSender } from "./validateSender";
 
 dotenv.config();

@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import { IUserDao } from "../dao/IUserDao";
 import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { User } from "../entities/User";
-import { HttpResponse, result, serverError } from "../utils/http";
+import { HttpResponse, result, serverError } from "../lib/http";
 import { Redis } from "ioredis";
 
 export async function GetUser(req: Request, res: Response): Promise<Response<HttpResponse<User>>> {

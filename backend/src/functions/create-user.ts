@@ -4,7 +4,7 @@ import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { User } from "../entities/User";
 import { DaoError } from "../errors/dao";
 import { CreateUserInput } from "../schema/user.schema";
-import { badRequestError, HttpResponse, result, serverError } from "../utils/http";
+import { badRequestError, HttpResponse, result, serverError } from "../lib/http";
 import { Redis } from "ioredis";
 
 export async function CreateUser(

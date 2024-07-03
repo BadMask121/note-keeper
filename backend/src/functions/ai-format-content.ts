@@ -3,7 +3,7 @@ import { Redis } from "ioredis";
 import { OpenAI } from "openai";
 import { InjectedDependency } from "../entities/Dependency";
 import { FormatContentInput } from "../schema/note.schema";
-import { HttpResponse, result, serverError } from "../utils/http";
+import { HttpResponse, result, serverError } from "../lib/http";
 
 export async function FormatNote(
   req: Request,

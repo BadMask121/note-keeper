@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import { ICollaborationDao } from "../dao/ICollaboratorDao";
 import { IUserDao } from "../dao/IUserDao";
 import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
-import { HttpResponse, result, serverError } from "../utils/http";
+import { HttpResponse, result, serverError } from "../lib/http";
 import { InviteUserInput } from "../schema/collaborator.schema";
 import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
 import { User } from "../entities/User";

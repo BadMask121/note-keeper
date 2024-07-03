@@ -1,5 +1,5 @@
 import { Firestore } from "@google-cloud/firestore";
-import { logger } from "../utils/logger";
+import { logger } from "../lib/logger";
 import path from "path";
 
 import { Chunk, StorageAdapterInterface, StorageKey } from "@automerge/automerge-repo";

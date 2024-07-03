@@ -1,7 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import { IUserDao } from "../dao/IUserDao";
 import { InjectedDependency } from "../entities/Dependency";
-import { serverError, unauthorized } from "../utils/http";
+import { serverError, unauthorized } from "../lib/http";
 /** Jwt authentic and return profile */
 // TODO: implement JWT authentication
 export async function authMiddleware(

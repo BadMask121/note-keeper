@@ -3,7 +3,7 @@ import { ICollaborationDao } from "../dao/ICollaboratorDao";
 import { INoteDao } from "../dao/INoteDao";
 import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { Note } from "../entities/Note";
-import { HttpResponse, result, serverError } from "../utils/http";
+import { HttpResponse, result, serverError } from "../lib/http";
 import { Redis } from "ioredis";
 
 // retrieve all notes by owner and notes they are invited to

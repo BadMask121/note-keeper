@@ -5,7 +5,7 @@ npm-debug.log
 .env
 package-lock.json
 coverage
-lib
+./lib
 .eslintcache
 .DS_Store
 tsconfig.prod.tsbuildinfo

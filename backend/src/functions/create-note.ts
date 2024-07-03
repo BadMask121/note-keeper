@@ -5,7 +5,7 @@ import { INoteDao } from "../dao/INoteDao";
 import { CacheKeyPrefix, InjectedDependency } from "../entities/Dependency";
 import { Note } from "../entities/Note";
 import { DaoError } from "../errors/dao";
-import { badRequestError, HttpResponse, result, serverError } from "../utils/http";
+import { badRequestError, HttpResponse, result, serverError } from "../lib/http";
 import { CreateNoteInput } from "../schema/note.schema";
 import { ICollaborationCacheDao } from "../dao/ICollaborationCacheDao";
 import Redis from "ioredis";
