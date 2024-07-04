@@ -1,6 +1,0 @@
-{
-  "env": {
-    "NEXT_PUBLIC_BACKEND_BASE_URL": "https://us-central1-tappz-d2142.cloudfunctions.net/tappz-api",
-    "NEXT_PUBLIC_WS_URL": "ws://tappz-ws-fl3vm4p4lq-uc.a.run.app"
-  }
-}

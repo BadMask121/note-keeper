@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useGet, usePost } from "@/hooks/useFetch";
 import { parseDateToRelativeString } from "@/lib/date";
 import { ProtectedRoutes } from "@/lib/routes";
-import { delUser, getUser, setSelectedNote } from "@/lib/storage";
+import { delSelectedNote, delUser, getUser, setSelectedNote } from "@/lib/storage";
 import { Note as INote, NoteResponse, NotesResponse } from "@/lib/types";
 import { useRepo } from "@automerge/automerge-repo-react-hooks";
 import { toDate } from "date-fns";
@@ -53,8 +53,9 @@ export default function NotePage() {
   }
 
   function signOut() {
-    delUser()
-    router.push("/")
+    delUser();
+    delSelectedNote();
+    router.push("/");
   }
 
 

@@ -1,5 +1,5 @@
 "use client"
-import { getUser } from "@/lib/storage";
+import { delSelectedNote, delUser, getUser } from "@/lib/storage";
 import dynamic from "next/dynamic";
 import { useRouter } from "next/navigation";
 const NoteProvider = dynamic(() => import("../../components/note-provider"), {
@@ -14,6 +14,8 @@ export default function Note() {
   const router = useRouter();
 
   if (!user) {
+    delUser();
+    delSelectedNote();
     router.push("/");
     return
   }
