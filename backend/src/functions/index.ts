@@ -69,20 +69,15 @@ app.set(InjectedDependency.OpenAI, openai);
 // Define a rate limiter with options
 const defaultLimit = {
   windowMs: 15 * 60 * 1000, // 15 minute
-  max: 10, // limit each IP to 100 requests per windowMs
+  max: 100, // limit each IP to 100 requests per windowMs
   message: "Too many requests from this IP, please try again later.",
 };
 
 const apiLimiter = rateLimit(defaultLimit);
 
 // TODO: implement signup authorization layer
-app.post("/user", rateLimit({ ...defaultLimit, max: 5 }), validate(createUserSchema), CreateUser);
-app.get(
-  "/user/:username",
-  rateLimit({ ...defaultLimit, max: 5 }),
-  validate(getUserSchema),
-  GetUser
-);
+app.post("/user", apiLimiter, validate(createUserSchema), CreateUser);
+app.get("/user/:username", apiLimiter, validate(getUserSchema), GetUser);
 
 // middleware to authenticate user requests
 app.use(authMiddleware);
@@ -99,7 +94,6 @@ app.post(
   rateLimit({
     ...defaultLimit,
     windowMs: 3 * 60 * 1000, // 3 minutes,
-    max: 20,
   }),
   validate(formatContentSchema),
   FormatNote

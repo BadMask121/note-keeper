@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { useGet, usePost } from "@/hooks/useFetch";
 import { parseDateToRelativeString } from "@/lib/date";
 import { ProtectedRoutes } from "@/lib/routes";
-import { getUser, setSelectedNote } from "@/lib/storage";
+import { delUser, getUser, setSelectedNote } from "@/lib/storage";
 import { Note as INote, NoteResponse, NotesResponse } from "@/lib/types";
 import { useRepo } from "@automerge/automerge-repo-react-hooks";
 import { toDate } from "date-fns";
@@ -52,25 +52,39 @@ export default function NotePage() {
     }
   }
 
+  function signOut() {
+    delUser()
+    router.push("/")
+  }
+
+
   return (
     <div className="flex h-screen gap-6">
-      <div className="w-64 flex flex-col border p-5">
-        <p className="mb-5">{user.name}
-          <span className="ml-2 text-xs text-gray-500">({user.username})</span>
-        </p>
-        <Button onClick={createNote}>{isMutating ? "Creating..." : "New Note"}</Button>
-        <div className="mt-5">
-          {groupedData.length ? groupedData.map(([day, items]) => (
-            <SideBarList
-              key={day}
-              day={day}
-              items={items}
-            />
-          )) : (
-            <div className="flex items-center justify-center">
-              <p className="text-gray-400">No Notes</p>
-            </div>
-          )}
+      <div className="w-64 flex flex-col border p-5 justify-between">
+        <div className="flex flex-col ">
+
+          <Button onClick={createNote}>{isMutating ? "Creating..." : "New Note"}</Button>
+          <div className="mt-5">
+            {groupedData.length ? groupedData.map(([day, items]) => (
+              <SideBarList
+                key={day}
+                day={day}
+                items={items}
+              />
+            )) : (
+              <div className="flex items-center justify-center">
+                <p className="text-gray-400">No Notes</p>
+              </div>
+            )}
+          </div>
+        </div>
+        <div>
+          <p className="mb-5">{user.name}
+            <span className="ml-2 text-xs text-gray-500">({user.username})</span>
+          </p>
+          <Button variant={"ghost"} className="w-full" onClick={signOut}>
+            Sign out
+          </Button>
         </div>
       </div>
       <div className="grow">

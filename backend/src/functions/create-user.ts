@@ -20,7 +20,7 @@ export async function CreateUser(
     const user = await userDao.create(userInfo);
 
     // cache stored user
-    await redis.set(`${CacheKeyPrefix.User}${user.username}`, JSON.stringify(user));
+    await redis.set(`${CacheKeyPrefix.User}${user.id}`, JSON.stringify(user));
     return result(res, user);
   } catch (error) {
     const err = error as DaoError;

@@ -27,7 +27,7 @@ if (userId) {
   });
 
   const networkAdapters: NetworkAdapter[] = [
-    accessDataProvider.wrap(new BrowserWebSocketClientAdapter("ws://localhost:3030")),
+    accessDataProvider.wrap(new BrowserWebSocketClientAdapter(`${process.env.NEXT_PUBLIC_WS_URL}`)),
     new BroadcastChannelNetworkAdapter(),
   ];
 

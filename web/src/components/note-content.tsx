@@ -43,10 +43,10 @@ export default function NoteContent() {
   }
 
   return <div>
-    <div className="p-2 mt-3 mb-3 flex justify-between w-full gap-10">
-      <p className="title text-lg outline-none h-full" >
-        {note?.title ? <p contentEditable>{note.title}</p> : <span className="text-gray-500" contentEditable>Title</span>}
-      </p>
+    <div className="p-2 mt-3 mb-3 flex justify-between w-full gap-10 items-center">
+      <div className="title text-lg outline-none w-full" >
+        {note?.title ? <p className="w-full" contentEditable>{note.title}</p> : <p className="text-gray-500 w-full" contentEditable>Title</p>}
+      </div>
       <div className="flex">
         {
           note?.owner === user.id ?

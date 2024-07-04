@@ -22,8 +22,10 @@ export async function RetrieveNotes(
   try {
     // Check cache
     const cachedResult = await redis.get(cacheKey);
-    if (cachedResult) {
-      return result(res, JSON.parse(cachedResult));
+    const cachedData = cachedResult ? (JSON.parse(cachedResult) as Note[]) : [];
+
+    if (cachedData.length) {
+      return result(res, cachedData);
     }
 
     const collabs = await collabDao.getUserCollaborations(user.id);

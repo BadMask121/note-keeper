@@ -17,7 +17,7 @@ const postRequest = (url: string, data: any) => axios.post(url, data?.arg, { hea
 const putRequest = (url: string, data: any) => axios.put(url, data?.arg, { headers: headers() }).then(res => res.data)
 
 export function useFetch<TResult>(url: string | null, fetch: (url: string) => Promise<any>) {
-  return useSWR<TResult, any, string>(`${baseUrl}${url}`, fetch)
+  return useSWR<TResult, any, string | null>(url ? `${baseUrl}${url}` : null, fetch)
 }
 
 /**
@@ -26,7 +26,7 @@ export function useFetch<TResult>(url: string | null, fetch: (url: string) => Pr
  * @returns 
  */
 export function usePost<TResult, TPayload = undefined>(url: string | null) {
-  return useSWRMutation<TResult, undefined, string, TPayload>(`${baseUrl}${url}`, postRequest)
+  return useSWRMutation<TResult, undefined, string | null, TPayload>(url ? `${baseUrl}${url}` : null, postRequest)
 }
 
 /**
@@ -35,7 +35,7 @@ export function usePost<TResult, TPayload = undefined>(url: string | null) {
  * @returns
  */
 export function usePut<TResult, TPayload = undefined>(url: string | null) {
-  return useSWRMutation<TResult, undefined, string, TPayload>(`${baseUrl}${url}`, putRequest)
+  return useSWRMutation<TResult, undefined, string | null, TPayload>(url ? `${baseUrl}${url}` : null, putRequest)
 }
 
 /**

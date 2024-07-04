@@ -54,22 +54,34 @@ export default function SigninPage(props: SignInCardProps) {
       try {
         const response = await mutate();
         if (response) {
+          if (!response.result) {
+            toast({
+              description: "User not found",
+              variant: "destructive",
+            });
+
+            return
+          }
           setUser(response?.result);
           router.push("/note");
+        } else {
+          toast({
+            description: "user login failed, please try again",
+            variant: "destructive",
+          });
         }
+
         return
       } catch (err) {
         let error = (err as any);
         if (error?.response?.data?.message) {
           toast({
-            title: "Authentication",
             description: (error as any)?.response?.data?.message,
             variant: "destructive",
           });
         } else {
           toast({
-            title: "Authentication",
-            description: "user creation failed, please try again",
+            description: "user login failed, please try again",
             variant: "destructive",
           });
         }

@@ -52,6 +52,7 @@ export function NoteEditor({ docUrl }: { docUrl: AutomergeUrl }) {
         view.focus(); // Optionally focus the editor after setting the cursor
       }
 
+
       view = new EditorView(editorRoot.current, {
         state: EditorState.create({
           schema: mirror.schema, // It's important that we use the schema from the mirror

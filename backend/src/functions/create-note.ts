@@ -51,6 +51,8 @@ export async function CreateNote(
 
     // cache saved note
     await redis.set(`${CacheKeyPrefix.Note}${note.id}`, JSON.stringify(note));
+    // expire notes TTL so it can be refetched
+    await redis.expire(`${CacheKeyPrefix.Notes}${user.id}`, 0);
 
     return result<Note>(res, note);
   } catch (error) {

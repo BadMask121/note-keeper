@@ -8,14 +8,13 @@ DO NOT USE IN PRODUCTION ALOT OF THE CODE ARE JUST FOR TESTING PURPOSES
 
 First, run the development server:
 
+Install packages
 ```bash
-npm run dev
-# or
-yarn dev
-# or
+pnpm i
+```
+Start web app
+```bash
 pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.

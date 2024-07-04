@@ -3,6 +3,7 @@ import { Note, User } from "./types";
 
 export const getUser = (): User => ls.get("user")
 export const setUser = (user: User) => ls.set("user", user)
+export const delUser = () => ls.remove("user");
 
 export const getDocUrl = (): User => ls.get("user")
 export const setDocUrl = (user: User) => ls.set("user", user)
