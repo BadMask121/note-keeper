@@ -16,9 +16,5 @@ You'll also need to create a private key for the service account (it should down
 
 
 TODO:
-
-- Orchestrate deployment pipeline and resource allocation declaration using cloud build and scripts.
 - improve integration test for endpoints
-- Improve documentation and diagram to show redis cache implementation
 - Improve documentation and diagram to show all the endpoints execution flow
-- Defined indexes
