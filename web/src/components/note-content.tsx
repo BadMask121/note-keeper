@@ -45,7 +45,7 @@ export default function NoteContent() {
   return <div>
     <div className="p-2 mt-3 mb-3 flex justify-between w-full gap-10 items-center">
       <div className="title text-lg outline-none w-full" >
-        {note?.title ? <p className="w-full" contentEditable>{note.title}</p> : <p className="text-gray-500 w-full" contentEditable>Title</p>}
+        {note?.title ? <p className="w-full leading-10 pl-1" contentEditable>{note.title}</p> : <p className="pl-2 text-gray-500 w-full leading-10" contentEditable>Title</p>}
       </div>
       <div className="flex">
         {
@@ -62,7 +62,7 @@ export default function NoteContent() {
             ?
             (
               <div className="flex ml-4 space-x-0">
-                {collabs.map((collab) => <InviteAvatar key={collab.id} {...collab} />)}
+                {collabs.map((collab) => <InviteAvatar key={collab.id} isOwner={collab.id === note?.owner} {...collab} />)}
               </div>
             )
             : null

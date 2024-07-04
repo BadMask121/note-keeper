@@ -112,17 +112,18 @@ export function InviteUser() {
 }
 
 
-export function InviteAvatar(user: User) {
+export function InviteAvatar({ name, username, isOwner }: User & { isOwner: boolean }) {
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Avatar className="cursor-default">
-            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
+            <AvatarFallback>{getInitials(name)}</AvatarFallback>
           </Avatar>
         </TooltipTrigger>
-        <TooltipContent>
-          <p>{`${user.name} (${user.username})`}</p>
+        <TooltipContent className="p-3">
+          <p>{`${name} (${username})`}</p>
+          {isOwner ? <p className="text-gray-500 italic text-xs mt-1">Owner</p> : null}
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
